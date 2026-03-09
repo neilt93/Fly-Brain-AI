@@ -564,6 +564,35 @@ def build_paper():
         "chemical and thermal sensing converge at the relay level despite complete separation "
         "at the DN level.", indent=False)
 
+    # ── 2.8 ──────────────────────────────────────────────────────────
+    pdf.subsection_heading("2.8", "Causal bottleneck validation")
+
+    pdf.body_text(
+        "To test whether the structural bottlenecks identified in Section 2.7 have functional "
+        "consequences, we performed two targeted silencing experiments.", indent=False)
+
+    pdf.bold_start_para("Experiment 1: DNb05 bottleneck silencing.",
+        "DNb05 is a bilateral descending neuron pair (2 neurons) receiving 93.2% of "
+        "thermosensory and 100% of hygrosensory direct synaptic input. Silencing both DNb05 "
+        "neurons produced complete collapse of hygrosensory throughput (100% of DNs and "
+        "synapses lost) and near-complete collapse of thermosensory throughput (40% of DNs, "
+        "93.2% of synapses). In contrast, somatosensory lost 0.5% of DNs (0.1% synapses), "
+        "visual lost 0%, and olfactory lost 0%. The specificity ratio was 16.4\u00d7: thermo/"
+        "hygro collapse was 16.4 times worse than the next-most-affected modality. This "
+        "confirms that DNb05 serves as a causal bottleneck for environmental sensing "
+        "(consistent with anatomical predictions from Marin et al. 2020), while major "
+        "sensorimotor channels remain functionally intact. All 4/4 tests passed.")
+
+    pdf.bold_start_para("Experiment 2: Auditory-visual shared DN silencing.",
+        "The 12 DNs shared between auditory and visual modalities (5 turn-left, 7 turn-right; "
+        "DNp01, DNp02, DNp11, DNp55, DNp69, DNg40) were silenced. Auditory lost 29.3% of "
+        "DN targets and 25.5% of synapses. Visual lost 27.3% of DN targets and 44.2% of "
+        "synapses \u2014 nearly half of visual motor output passes through these shared turning "
+        "DNs. The impact was turning-specific: auditory turn_right throughput dropped 35.1%, "
+        "turn_left 16.5%, while forward, rhythm, and stance remained at 0% loss. Olfactory, "
+        "thermosensory, and hygrosensory were completely unaffected (0% each). All 4/4 tests "
+        "passed. Combined: 8/8 causal tests across both experiments.")
+
     # ══════════════════════════════════════════════════════════════════
     #  3. DISCUSSION
     # ══════════════════════════════════════════════════════════════════

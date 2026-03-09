@@ -201,6 +201,18 @@ The labeled-line principle scales to six modalities. Olfactory remains completel
 
 At 2-hops, auditory routes through 891 active intermediates, largely separate from visual (Jaccard = 0.021) and olfactory (0.001). However, olfactory and thermosensory/hygrosensory share substantial intermediate overlap (0.287-0.306), suggesting that chemical and thermal/humidity sensing converge at the relay level despite complete separation at the DN level.
 
+### 2.8 Causal bottleneck validation
+
+To test whether the structural bottlenecks identified in Section 2.7 have functional consequences, we performed two targeted silencing experiments.
+
+**Experiment 1: DNb05 bottleneck silencing.** DNb05 is a bilateral descending neuron pair (2 neurons) that receives the majority of thermosensory (93.2% of synapses) and all hygrosensory (100%) direct input. We silenced both DNb05 neurons and measured the impact on each modality's throughput to the remaining 348 readout DNs.
+
+Hygrosensory throughput collapsed completely: 100% of DNs lost, 100% of synapses (200/200). Thermosensory throughput was devastated: 40% of DNs lost, 93.2% of synapses (151/162). In contrast, somatosensory lost 0.5% of DNs and 0.1% of synapses, visual lost 0%, and olfactory lost 0%. The specificity ratio (thermo loss / max other modality loss) was 16.4x. This confirms that DNb05 serves as a causal bottleneck for environmental sensing (consistent with anatomical predictions from Marin et al. 2020), while major sensorimotor channels remain functionally intact.
+
+**Experiment 2: Auditory-visual shared DN silencing.** The 12 DNs shared between auditory and visual modalities (5 turn-left, 7 turn-right; all turning types including DNp01, DNp02, DNp11, DNp55, DNp69, DNg40) were silenced to test whether this selectively disrupts orientation-like turning.
+
+Auditory lost 29.3% of its DN targets (12/41) and 25.5% of synapses. Visual lost 27.3% of DN targets (12/44) and 44.2% of synapses — nearly half of visual motor output passes through these shared turning DNs. Critically, the impact was turning-specific: auditory turn_right throughput dropped 35.1%, turn_left 16.5%, while forward, rhythm, and stance throughput remained at 0% loss. Olfactory was completely unaffected (0%), as were thermosensory and hygrosensory (0% each). All 8/8 causal tests passed across both experiments.
+
 ---
 
 ## 3. Discussion
