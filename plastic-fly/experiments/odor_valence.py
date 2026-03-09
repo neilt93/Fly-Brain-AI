@@ -91,11 +91,15 @@ def run_valence_trial(
     use_fake_brain: bool = False,
     seed: int = 42,
     shuffle_seed: int | None = None,
+    decoder_path: str | Path | None = None,
+    rate_scale: float | None = None,
 ) -> dict:
     """Run a single trial with specified odor asymmetry.
 
     Args:
         shuffle_seed: If set, shuffles connectome postsynaptic targets (control).
+        decoder_path: Path to decoder groups JSON. Defaults to config default.
+        rate_scale: Decoder sensitivity. Defaults to config default.
 
     Returns dict with turn_drive time series and summary stats.
     """
@@ -109,7 +113,9 @@ def run_valence_trial(
         max_rate_hz=cfg.max_rate_hz,
         baseline_rate_hz=cfg.baseline_rate_hz,
     )
-    decoder = DescendingDecoder.from_json(cfg.decoder_groups_path, rate_scale=cfg.rate_scale)
+    dec_path = decoder_path or cfg.decoder_groups_path
+    dec_scale = rate_scale or cfg.rate_scale
+    decoder = DescendingDecoder.from_json(dec_path, rate_scale=dec_scale)
     locomotion = LocomotionBridge(seed=seed)
     adapter = FlyGymAdapter()
 
@@ -230,6 +236,8 @@ def _run_condition_set(
     use_fake_brain: bool,
     seeds: list[int],
     shuffle_seed: int | None = None,
+    decoder_path: str | Path | None = None,
+    rate_scale: float | None = None,
 ) -> dict:
     """Run a set of conditions across seeds, returning {cond_name: [results]}."""
     tag = "SHUFFLED" if shuffle_seed is not None else "REAL"
@@ -255,6 +263,8 @@ def _run_condition_set(
                 use_fake_brain=use_fake_brain,
                 seed=seed,
                 shuffle_seed=shuffle_seed,
+                decoder_path=decoder_path,
+                rate_scale=rate_scale,
             )
             cond_results.append(result)
         all_results[cond_name] = cond_results
@@ -308,6 +318,8 @@ def run_odor_valence(
     odor_low: float = 0.0,
     seeds: list[int] = None,
     run_shuffled: bool = True,
+    readout_version: int = 2,
+    rate_scale: float = 15.0,
     output_dir: str = "logs/odor_valence",
 ):
     if seeds is None:
@@ -322,7 +334,13 @@ def run_odor_valence(
     with open(base_channel_map_path) as f:
         base_cm = json.load(f)
 
-    readout_ids = np.load(cfg.readout_ids_path)
+    if readout_version == 2:
+        readout_ids = np.load(cfg.data_dir / "readout_ids_v2.npy")
+        decoder_path = cfg.data_dir / "decoder_groups_v2.json"
+    else:
+        readout_ids = np.load(cfg.readout_ids_path)
+        decoder_path = cfg.decoder_groups_path
+    print("Readout v%d: %d neurons, rate_scale=%.1f" % (readout_version, len(readout_ids), rate_scale))
 
     # Load glomerulus-specific ORN populations
     print("Loading ORN populations from FlyWire annotations...")
@@ -353,6 +371,7 @@ def run_odor_valence(
     real_results = _run_condition_set(
         conditions, readout_ids, body_steps, warmup_steps,
         use_fake_brain, seeds, shuffle_seed=None,
+        decoder_path=decoder_path, rate_scale=rate_scale,
     )
 
     # --- Shuffled connectome control ---
@@ -364,6 +383,7 @@ def run_odor_valence(
         shuf_results = _run_condition_set(
             conditions, readout_ids, body_steps, warmup_steps,
             use_fake_brain, seeds, shuffle_seed=999,
+            decoder_path=decoder_path, rate_scale=rate_scale,
         )
 
     # --- Analysis ---
@@ -485,6 +505,8 @@ if __name__ == "__main__":
     parser.add_argument("--odor-low", type=float, default=0.0)
     parser.add_argument("--seeds", type=int, nargs="+", default=[42, 43, 44])
     parser.add_argument("--no-shuffle", action="store_true", help="Skip shuffled control")
+    parser.add_argument("--readout-version", type=int, default=2, choices=[1, 2])
+    parser.add_argument("--rate-scale", type=float, default=15.0)
     parser.add_argument("--output-dir", default="logs/odor_valence")
     args = parser.parse_args()
 
@@ -496,5 +518,7 @@ if __name__ == "__main__":
         odor_low=args.odor_low,
         seeds=args.seeds,
         run_shuffled=not args.no_shuffle,
+        readout_version=args.readout_version,
+        rate_scale=args.rate_scale,
         output_dir=args.output_dir,
     )
