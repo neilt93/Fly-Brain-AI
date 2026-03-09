@@ -152,7 +152,7 @@ def build_paper():
         align="C")
     pdf.ln(10)
     pdf.set_font("tnr", "", 12)
-    pdf.cell(0, 7, "Neil Bhatt", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 7, "Neil Tripathi", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(4)
     pdf.set_font("tnr", "I", 10)
     pdf.set_text_color(100)
@@ -186,10 +186,13 @@ def build_paper():
         "shuffled connectome controls). Analysis of the descending neuron populations "
         "underlying these behaviors reveals a structural principle: at the direct "
         "sensory-to-motor interface, modalities maintain near-complete segregation (Jaccard "
-        "index 0.005\u20130.060), with convergence occurring one synapse deeper through "
-        "modality-specific interneuron pools that share zero intermediates between visual "
-        "and olfactory pathways \u2014 the connectome implements labeled lines at both the "
-        "descending and relay levels."
+        "index 0.005\u20130.060 across the original three modalities), with convergence occurring "
+        "one synapse deeper through modality-specific interneuron pools that share zero "
+        "intermediates between visual and olfactory pathways. Extended analysis across six "
+        "sensory modalities (adding 390 auditory, 29 thermosensory, and 74 hygrosensory "
+        "neurons) confirms the labeled-line principle generalizes: olfactory has zero DN "
+        "overlap with all five other modalities, while thermo-hygro converge on a single DN "
+        "type (DNb05) with 10\u00d7 more overlap than shuffled controls."
     )
     pdf.set_font("tnr", "", 10)
     pdf.set_left_margin(25)
@@ -501,6 +504,66 @@ def build_paper():
         "somatosensory at 1-hop \u2014 zero visual and zero olfactory synapses. This pattern "
         "fell out of the connectome analysis and was not designed into the decoder.", indent=False)
 
+    # ── 2.7 ──────────────────────────────────────────────────────────
+    pdf.subsection_heading("2.7", "Extended labeled lines: auditory, thermosensory, and hygrosensory")
+
+    pdf.body_text(
+        "To test whether the labeled-line principle generalizes beyond the three modalities "
+        "used in behavioral experiments, we extended the segregation analysis to three "
+        "additional sensory populations identified from FlyWire annotations: auditory "
+        "(390 Johnston\u2019s organ neurons), thermosensory (29 neurons: 7 heating/TRN_VP2, "
+        "9 cold/TRN_VP3a-b, 13 humidity-sensitive/TRN_VP1m), and hygrosensory (74 neurons: "
+        "29 dry/HRN_VP4, 16 moist/HRN_VP5, 16 evaporative cooling/HRN_VP1d, 13 cooling/"
+        "HRN_VP1l).", indent=False)
+
+    pdf.bold_start_para("Auditory: a semi-independent turning/rhythm channel.",
+        "Auditory neurons reach 41 DNs at 1-hop (405 edges, 1,563 synapses). The auditory "
+        "channel shows moderate overlap with visual (Jaccard = 0.164, 12 shared DNs) and "
+        "somatosensory (0.066, 14 shared), but zero overlap with olfactory (0.000). Its "
+        "strongest per-neuron drive targets the rhythm group (13.7 syn/neuron) and bilateral "
+        "turning (5.1 left, 4.9 right), consistent with auditory-driven courtship orientation "
+        "and song-evoked locomotor modulation. Shuffled controls confirm the visual-auditory "
+        "overlap is still 3.8\u00d7 below chance.")
+
+    pdf.bold_start_para("Thermosensory: an extremely narrow labeled line.",
+        "Thermosensory neurons reach only 5 DNs (14 edges, 162 synapses) \u2014 the narrowest "
+        "labeled line of any modality tested. All 5 target DNs are in the turning groups "
+        "(4 turn-right, 1 turn-left), consistent with thermotaxis. The dominant target is "
+        "DNb05 (151/162 synapses, 93%), suggesting a single-neuron bottleneck for thermal "
+        "motor commands.")
+
+    pdf.bold_start_para("Hygrosensory: convergence with thermosensory on DNb05.",
+        "Hygrosensory neurons reach just 2 DNs (13 edges, 200 synapses) \u2014 both are DNb05 "
+        "(turn-right). This is the most specific labeled line: 74 sensory neurons funneling "
+        "through a single descending neuron type. The thermo-hygro Jaccard (0.400) is "
+        "strikingly high, and the shuffled control ratio (0.1\u00d7) confirms this is genuine "
+        "convergence \u2014 10\u00d7 more overlap than chance. Temperature and humidity share a "
+        "dedicated motor output channel, consistent with their joint role in thermoregulation.")
+
+    pdf.bold_start_para("Six-modality segregation summary.", "")
+
+    pdf.add_table(
+        ["Pair", "Shared DNs", "Jaccard"],
+        [
+            ["Auditory\u2013Visual", "12", "0.164"],
+            ["Auditory\u2013Somatosensory", "14", "0.066"],
+            ["Auditory\u2013Thermosensory", "2", "0.045"],
+            ["Thermo\u2013Hygrosensory", "2", "0.400"],
+            ["Olfactory\u2013(all others)", "0\u20131", "0.000"],
+        ],
+        col_widths=[w*0.45, w*0.25, w*0.30]
+    )
+
+    pdf.body_text(
+        "The labeled-line principle scales to six modalities. Olfactory remains completely "
+        "isolated (Jaccard = 0.000 with all five other modalities). The only significant "
+        "cross-modal convergence occurs between thermo-hygro (shared DNb05 target) and "
+        "between auditory-visual (shared turning DNs) \u2014 both cases where rapid multimodal "
+        "integration is biologically relevant. At 2-hops, olfactory and thermo/hygrosensory "
+        "share substantial intermediate overlap (Jaccard 0.287\u20130.306), suggesting that "
+        "chemical and thermal sensing converge at the relay level despite complete separation "
+        "at the DN level.", indent=False)
+
     # ══════════════════════════════════════════════════════════════════
     #  3. DISCUSSION
     # ══════════════════════════════════════════════════════════════════
@@ -564,13 +627,21 @@ def build_paper():
         "\u2014 a conservative analysis using the full connectome is warranted. Despite these "
         "simplifications, the system produces robust, stimulus-specific behavior.")
 
+    pdf.bold_start_para("Extended labeled lines.",
+        "The six-modality analysis (Section 2.7) reveals two types of cross-modal convergence. "
+        "Auditory and visual share 12 turning DNs (Jaccard = 0.164) \u2014 both are head-mounted "
+        "sensors that drive rapid orientation. Thermo and hygrosensory converge on DNb05 "
+        "(Jaccard = 0.400, 10\u00d7 above shuffled controls) \u2014 a dedicated thermo-hygro motor "
+        "channel for thermoregulation. Olfactory remains completely isolated from all five "
+        "other modalities (Jaccard = 0.000). These patterns suggest that the connectome\u2019s "
+        "labeled-line architecture is a general organizing principle, not an artifact of the "
+        "three modalities initially examined.")
+
     pdf.bold_start_para("Future directions.",
-        "The segregation analysis can be extended to additional modalities (auditory, "
-        "thermosensory) and deeper hop counts. Replacing the preprogrammed CPG with a VNC "
-        "connectome model would close the final loop in the sensorimotor arc. The dose-response "
-        "relationship between population size and behavioral effect suggests that the system can "
-        "predict the behavioral consequences of genetic manipulations that silence specific "
-        "neuron types.")
+        "Replacing the preprogrammed CPG with a VNC connectome model would close the final "
+        "loop in the sensorimotor arc. The dose-response relationship between population size "
+        "and behavioral effect suggests that the system can predict the behavioral consequences "
+        "of genetic manipulations that silence specific neuron types.")
 
     # ══════════════════════════════════════════════════════════════════
     #  4. METHODS
