@@ -1,7 +1,10 @@
-flygym>=0.2.0
-numpy>=1.24,<2.0
+flygym>=1.2.0
+numpy>=2.0
 matplotlib>=3.7
 scipy>=1.10
+brian2>=2.5
+pandas>=2.0
+pyarrow>=14.0
 torch>=2.0
 h5py>=3.8
 imageio>=2.31

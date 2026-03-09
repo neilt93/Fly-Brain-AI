@@ -135,24 +135,42 @@ def run_single_perturbation(
     onset_frac: float = 0.25,
     offset_frac: float = 0.75,
     sample_interval: int = 20,
+    readout_version: int = 2,
 ) -> dict:
     """Run one perturbation condition with three-phase protocol."""
     import flygym
 
     cfg = BridgeConfig()
 
-    sensory_ids = np.load(cfg.sensory_ids_path)
-    readout_ids = np.load(cfg.readout_ids_path)
+    if readout_version == 3:
+        sensory_ids = np.load(cfg.data_dir / "sensory_ids_v3.npy")
+        readout_ids = np.load(cfg.data_dir / "readout_ids_v3.npy")
+        channel_map_path = cfg.data_dir / "channel_map_v3.json"
+        decoder_path = cfg.data_dir / "decoder_groups_v3.json"
+        rate_scale = 12.0
+    elif readout_version == 2:
+        sensory_ids_path = cfg.data_dir / "sensory_ids_v3.npy"
+        sensory_ids = np.load(sensory_ids_path) if sensory_ids_path.exists() else np.load(cfg.sensory_ids_path)
+        readout_ids = np.load(cfg.data_dir / "readout_ids_v2.npy")
+        channel_map_path = cfg.data_dir / "channel_map_v3.json"
+        decoder_path = cfg.data_dir / "decoder_groups_v2.json"
+        rate_scale = 15.0
+    else:
+        sensory_ids = np.load(cfg.sensory_ids_path)
+        readout_ids = np.load(cfg.readout_ids_path)
+        channel_map_path = cfg.channel_map_path
+        decoder_path = cfg.decoder_groups_path
+        rate_scale = cfg.rate_scale
 
-    if cfg.channel_map_path.exists():
+    if channel_map_path.exists():
         encoder = SensoryEncoder.from_channel_map(
-            sensory_ids, cfg.channel_map_path,
+            sensory_ids, channel_map_path,
             max_rate_hz=cfg.max_rate_hz, baseline_rate_hz=cfg.baseline_rate_hz,
         )
     else:
         encoder = SensoryEncoder(sensory_ids, max_rate_hz=cfg.max_rate_hz)
 
-    decoder = DescendingDecoder.from_json(cfg.decoder_groups_path, rate_scale=cfg.rate_scale)
+    decoder = DescendingDecoder.from_json(decoder_path, rate_scale=rate_scale)
     locomotion = LocomotionBridge(seed=seed)
     adapter = FlyGymAdapter()
 
@@ -380,12 +398,20 @@ def run_perturbation_study(
     conditions: list[str] | None = None,
     onset_frac: float = 0.25,
     offset_frac: float = 0.75,
+    readout_version: int = 2,
 ):
     cfg = BridgeConfig()
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    with open(cfg.decoder_groups_path) as f:
+    if readout_version == 3:
+        dec_path = cfg.data_dir / "decoder_groups_v3.json"
+    elif readout_version == 2:
+        dec_path = cfg.data_dir / "decoder_groups_v2.json"
+    else:
+        dec_path = cfg.decoder_groups_path
+
+    with open(dec_path) as f:
         decoder_groups = json.load(f)
 
     if conditions is None:
@@ -414,6 +440,7 @@ def run_perturbation_study(
             decoder_groups=decoder_groups,
             onset_frac=onset_frac,
             offset_frac=offset_frac,
+            readout_version=readout_version,
         )
         if "error" in r:
             print("  ERROR: %s" % r["error"])
@@ -620,6 +647,7 @@ if __name__ == "__main__":
                         help="Perturbation onset as fraction of body_steps (default: 0.25)")
     parser.add_argument("--offset-frac", type=float, default=0.75,
                         help="Perturbation offset as fraction of body_steps (default: 0.75)")
+    parser.add_argument("--readout-version", type=int, default=2, choices=[1, 2, 3])
     args = parser.parse_args()
 
     run_perturbation_study(
@@ -631,4 +659,5 @@ if __name__ == "__main__":
         conditions=args.conditions,
         onset_frac=args.onset_frac,
         offset_frac=args.offset_frac,
+        readout_version=args.readout_version,
     )

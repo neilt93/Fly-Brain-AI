@@ -154,8 +154,9 @@ class SensoryEncoder:
             vision = obs.vision
             if vision.ndim == 3 and vision.shape[0] == 2:
                 # Mean luminance per eye (average across ommatidia and channels)
-                left_lum = float(np.mean(vision[0])) / 255.0   # normalize 0-255 -> 0-1
-                right_lum = float(np.mean(vision[1])) / 255.0
+                # FlyGym vision values are already 0-1
+                left_lum = float(np.mean(vision[0]))
+                right_lum = float(np.mean(vision[1]))
             else:
                 left_lum = 0.0
                 right_lum = 0.0
@@ -168,6 +169,23 @@ class SensoryEncoder:
                 idx = self._channels["visual_right"]
                 if len(idx) > 0:
                     rates[idx] = base + (max_r - base) * np.clip(right_lum, 0, 1)
+
+        # Looming: LPLC2 neurons driven by looming_intensity (bilateral)
+        # LPLC2 uses higher max rate (200Hz) than standard channels (100Hz)
+        if obs.looming_intensity is not None:
+            loom = obs.looming_intensity  # (2,) left/right [0-1]
+            lplc2_max = 200.0  # Hz — strong looming stimulus
+            left_loom = float(np.clip(loom[0], 0, 1))
+            right_loom = float(np.clip(loom[1], 0, 1))
+
+            if "lplc2_left" in self._channels:
+                idx = self._channels["lplc2_left"]
+                if len(idx) > 0:
+                    rates[idx] = base + (lplc2_max - base) * left_loom
+            if "lplc2_right" in self._channels:
+                idx = self._channels["lplc2_right"]
+                if len(idx) > 0:
+                    rates[idx] = base + (lplc2_max - base) * right_loom
 
     def _encode_flat(self, obs: BodyObservation, rates: np.ndarray):
         """Fallback: v1-style flat encoding (for backward compatibility)."""
