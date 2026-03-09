@@ -352,11 +352,11 @@ def build_paper():
         "Shuffled connectome eliminates all valence signals. 6/6 validation tests pass.",
         fig_num=3, width=w*0.95)
 
-    pdf.bold_start_para("Results (n=3 seeds):",
-        "DM1 (attractive): turn contrast = \u22120.023 (toward odor source). "
-        "DM5 (aversive): turn contrast = +0.044 (away from odor source). "
-        "Valence contrast (DM5 \u2212 DM1) = +0.066. All 6 validation tests passed. "
-        "The shuffled connectome eliminated all valence signals (contrast = \u22120.0005), "
+    pdf.bold_start_para("Results (n=10 seeds):",
+        "DM1 (attractive): turn contrast = \u22120.002 (toward odor source). "
+        "DM5 (aversive): turn contrast = +0.033 (away from odor source). "
+        "Valence contrast (DM5 \u2212 DM1) = +0.035. All 6 validation tests passed. "
+        "The shuffled connectome eliminated all valence signals (contrast = +0.002), "
         "confirming that odor valence is encoded in specific synaptic wiring.")
 
     # ── 2.4 ──────────────────────────────────────────────────────────

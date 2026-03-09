@@ -66,10 +66,10 @@ Drosophila innately approach some odors and avoid others. We tested whether the 
 
 For each odor type, we presented asymmetric stimulation (high intensity on one side, zero on the other) and measured the resulting turn drive.
 
-**Results (Fig. 3A, n=3 seeds):**
-- DM1 (attractive): turn contrast = -0.023 (toward odor source)
-- DM5 (aversive): turn contrast = +0.044 (away from odor source)
-- Valence contrast (DM5 - DM1) = +0.066
+**Results (Fig. 3, n=10 seeds):**
+- DM1 (attractive): turn contrast = -0.002 (toward odor source)
+- DM5 (aversive): turn contrast = +0.033 (away from odor source)
+- Valence contrast (DM5 - DM1) = +0.035
 
 All 6 validation tests passed:
 1. DM1 produces attractive turning (toward source)
@@ -79,7 +79,7 @@ All 6 validation tests passed:
 5. DM1 connectome specificity (real vs shuffled)
 6. DM5 connectome specificity (real vs shuffled)
 
-The shuffled connectome eliminated all valence signals (contrast = -0.0005), confirming that odor valence discrimination is encoded in the specific synaptic wiring of the connectome, not in generic network properties.
+The shuffled connectome eliminated all valence signals (contrast = +0.002), confirming that odor valence discrimination is encoded in the specific synaptic wiring of the connectome, not in generic network properties.
 
 ### 2.4 Looming escape via LPLC2 descending pathway
 
