@@ -415,6 +415,15 @@ def build_paper():
         "modality. The direct sensory-to-motor interface maintains near-complete modality "
         "segregation.", indent=False)
 
+    pdf.bold_start_para("Shuffled connectome control.",
+        "To test whether this segregation could arise from population size differences, we "
+        "shuffled the connectome (n=5 permutations, preserving out-degree). Shuffled wiring "
+        "produced 4.6\u201321.4\u00d7 higher pairwise Jaccard: somatosensory\u2013visual 0.273 "
+        "vs 0.060 (4.6\u00d7), somatosensory\u2013olfactory 0.115 vs 0.005 (21.4\u00d7), "
+        "visual\u2013olfactory 0.155 vs 0.023 (6.8\u00d7). The near-zero overlap is not a "
+        "trivial consequence of small populations \u2014 it is actively maintained by the "
+        "specific synaptic wiring.")
+
     pdf.bold_start_para("The 13 shared visual-somatosensory DNs.",
         "All 13 receive input specifically from LPLC2 looming detectors (not generic R7/R8 "
         "photoreceptors, which have zero direct DN connections). These are annotated "
