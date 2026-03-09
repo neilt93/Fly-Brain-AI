@@ -15,9 +15,9 @@ class BridgeConfig:
     data_dir: Path = Path(__file__).resolve().parent.parent / "data"
 
     # Brain timing
-    brain_dt_ms: float = 10.0         # brain simulation window per step
+    brain_dt_ms: float = 20.0         # brain simulation window per step (was 10ms)
     brain_warmup_ms: float = 200.0    # initial brain warmup before loop
-    body_steps_per_brain: int = 100   # body physics steps per brain step
+    body_steps_per_brain: int = 200   # body physics steps per brain step (match 20ms)
 
     # Encoding
     max_rate_hz: float = 100.0        # max Poisson rate for sensory input

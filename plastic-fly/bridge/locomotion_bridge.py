@@ -17,6 +17,7 @@ from bridge.interfaces import LocomotionCommand
 
 
 LEGS = ["LF", "LM", "LH", "RF", "RM", "RH"]
+TRIPOD_PHASES = np.array([0, np.pi, 0, np.pi, 0, np.pi])
 
 
 class LocomotionBridge:
@@ -61,8 +62,9 @@ class LocomotionBridge:
 
         self.cpg.step()
 
-        # Forward drive scales amplitude
-        amp_scale = max(0.1, cmd.forward_drive)
+        # Forward drive scales amplitude (floor at 0.6 — below this the CPG
+        # oscillates but produces no net forward thrust due to physics)
+        amp_scale = 0.6 + 0.4 * cmd.forward_drive
 
         # Turn: reduce amplitude on turning side
         left_scale = 1.0 - 0.3 * max(0.0, cmd.turn_drive)
@@ -91,10 +93,10 @@ class LocomotionBridge:
         }
 
     def warmup(self, n_steps: int = 500):
-        """Ramp CPG from zero (required for stable physics)."""
-        self.cpg.reset(init_phases=np.zeros(6), init_magnitudes=np.zeros(6))
+        """Ramp CPG from zero with tripod phase pattern."""
+        self.cpg.reset(init_phases=TRIPOD_PHASES, init_magnitudes=np.zeros(6))
         for _ in range(n_steps):
             self.cpg.step()
 
     def reset(self):
-        self.cpg.reset()
+        self.cpg.reset(init_phases=TRIPOD_PHASES, init_magnitudes=np.zeros(6))

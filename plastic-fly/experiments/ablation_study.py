@@ -141,7 +141,8 @@ def run_single_condition(
 
     # Warmup
     locomotion.warmup(0)
-    locomotion.cpg.reset(init_phases=np.zeros(6), init_magnitudes=np.zeros(6))
+    locomotion.cpg.reset(init_phases=np.array([0, np.pi, 0, np.pi, 0, np.pi]),
+                         init_magnitudes=np.zeros(6))
     for _ in range(warmup_steps):
         action = locomotion.step(LocomotionCommand(forward_drive=1.0))
         try:

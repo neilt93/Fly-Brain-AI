@@ -149,7 +149,7 @@ def run_continuous_episode(
 
     # Reset CPG to zero and ramp up (only at episode start)
     controller.cpg.reset(
-        init_phases=np.zeros(6),
+        init_phases=np.array([0, np.pi, 0, np.pi, 0, np.pi]),
         init_magnitudes=np.zeros(6),
     )
     controller.net.reset_state()

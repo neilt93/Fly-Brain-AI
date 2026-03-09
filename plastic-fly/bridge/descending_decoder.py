@@ -48,7 +48,7 @@ class DescendingDecoder:
         stance = mean_rate(self.stance_ids)
 
         return LocomotionCommand(
-            forward_drive=float(np.tanh(forward / self.rate_scale)),
+            forward_drive=float(max(0.1, np.tanh(forward / self.rate_scale))),
             turn_drive=float(np.tanh((left - right) / self.rate_scale)),
             step_frequency=float(1.0 + 1.5 * np.tanh(rhythm / self.rate_scale)),
             stance_gain=float(1.0 + 0.5 * np.tanh(stance / self.rate_scale)),
