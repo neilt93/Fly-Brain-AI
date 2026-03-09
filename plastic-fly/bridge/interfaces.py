@@ -17,6 +17,9 @@ class BodyObservation:
     contact_forces: np.ndarray     # (6,) per-leg force magnitude, normalized
     body_velocity: np.ndarray      # (3,) mm/s
     body_orientation: np.ndarray   # (3,)
+    # Optional sensory channels (None when not enabled)
+    vision: np.ndarray | None = None        # (2, 721, 2) ommatidia per eye
+    odor_intensity: np.ndarray | None = None  # (k, 4) odor at 4 sensors
 
 
 @dataclass

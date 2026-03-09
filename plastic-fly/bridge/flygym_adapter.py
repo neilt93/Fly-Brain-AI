@@ -38,10 +38,20 @@ class FlyGymAdapter:
         body_velocity = fly[1] if fly.ndim == 2 and fly.shape[0] >= 2 else np.zeros(3)
         body_orientation = fly[2] if fly.ndim == 2 and fly.shape[0] >= 3 else np.zeros(3)
 
+        # Optional: vision and olfaction
+        vision = None
+        odor_intensity = None
+        if "vision" in obs:
+            vision = np.asarray(obs["vision"], dtype=np.float32)
+        if "odor_intensity" in obs:
+            odor_intensity = np.asarray(obs["odor_intensity"], dtype=np.float32)
+
         return BodyObservation(
             joint_angles=joint_angles.astype(np.float32),
             joint_velocities=joint_velocities.astype(np.float32),
             contact_forces=contact_forces.astype(np.float32),
             body_velocity=body_velocity.astype(np.float32),
             body_orientation=body_orientation.astype(np.float32),
+            vision=vision,
+            odor_intensity=odor_intensity,
         )

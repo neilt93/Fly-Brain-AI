@@ -1,12 +1,16 @@
 """
-Sensory encoder: body state → Poisson firing rates for brain sensory neurons.
+Sensory encoder: body state -> Poisson firing rates for brain sensory neurons.
 
-v2: channel-specific encoding. Body observation fields map to identified
-    neuron populations via channel_map.json:
-      - gustatory:      sugar GRNs, driven by contact forces (ground → feeding)
-      - proprioceptive: SEZ ascending types, driven by joint angles + velocities
-      - mechanosensory: SEZ ascending types, driven by leg contact force magnitudes
-      - vestibular:     SEZ ascending types, driven by body velocity + orientation
+v3: channel-specific encoding with vision and olfaction support.
+    Body observation fields map to identified neuron populations via channel_map.json:
+      - gustatory:       sugar GRNs, driven by contact forces (ground -> feeding)
+      - proprioceptive:  SEZ ascending types, driven by joint angles + velocities
+      - mechanosensory:  SEZ ascending types, driven by leg contact force magnitudes
+      - vestibular:      SEZ ascending types, driven by body velocity + orientation
+      - olfactory_left:  left ORNs, driven by left antenna odor intensity
+      - olfactory_right: right ORNs, driven by right antenna odor intensity
+      - visual_left:     left eye R7/R8, driven by left eye mean luminance
+      - visual_right:    right eye R7/R8, driven by right eye mean luminance
 """
 
 import json
@@ -105,7 +109,7 @@ class SensoryEncoder:
                 # Direct mapping: higher force → higher rate
                 rates[idx] = (base + forces * (max_r - base)).astype(np.float32)
 
-        # Vestibular: body velocity + orientation → per-neuron rates
+        # Vestibular: body velocity + orientation -> per-neuron rates
         if "vestibular" in self._channels:
             idx = self._channels["vestibular"]
             if len(idx) > 0:
@@ -118,6 +122,52 @@ class SensoryEncoder:
                 else:
                     features = features[:n]
                 rates[idx] = ((features + 1.0) * 0.5 * (max_r - base) + base).astype(np.float32)
+
+        # Olfactory: odor intensity at antennae -> ORN firing rates (bilateral)
+        # obs.odor_intensity shape: (k, 4) — k odor dims, 4 sensors
+        # Sensors: 0=L antenna, 1=R antenna, 2=L palp, 3=R palp
+        if obs.odor_intensity is not None:
+            odor = obs.odor_intensity
+            # Use first odor dimension, combine antenna + palp per side
+            if odor.ndim == 2 and odor.shape[1] >= 4:
+                left_odor = float(np.clip((odor[0, 0] + odor[0, 2]) * 0.5, 0, 1))
+                right_odor = float(np.clip((odor[0, 1] + odor[0, 3]) * 0.5, 0, 1))
+            elif odor.ndim == 1 and len(odor) >= 4:
+                left_odor = float(np.clip((odor[0] + odor[2]) * 0.5, 0, 1))
+                right_odor = float(np.clip((odor[1] + odor[3]) * 0.5, 0, 1))
+            else:
+                left_odor = 0.0
+                right_odor = 0.0
+
+            if "olfactory_left" in self._channels:
+                idx = self._channels["olfactory_left"]
+                if len(idx) > 0:
+                    rates[idx] = base + (max_r - base) * left_odor
+            if "olfactory_right" in self._channels:
+                idx = self._channels["olfactory_right"]
+                if len(idx) > 0:
+                    rates[idx] = base + (max_r - base) * right_odor
+
+        # Visual: ommatidia intensity -> photoreceptor firing rates (bilateral)
+        # obs.vision shape: (2, 721, 2) — 2 eyes, 721 ommatidia, 2 channels
+        if obs.vision is not None:
+            vision = obs.vision
+            if vision.ndim == 3 and vision.shape[0] == 2:
+                # Mean luminance per eye (average across ommatidia and channels)
+                left_lum = float(np.mean(vision[0])) / 255.0   # normalize 0-255 -> 0-1
+                right_lum = float(np.mean(vision[1])) / 255.0
+            else:
+                left_lum = 0.0
+                right_lum = 0.0
+
+            if "visual_left" in self._channels:
+                idx = self._channels["visual_left"]
+                if len(idx) > 0:
+                    rates[idx] = base + (max_r - base) * np.clip(left_lum, 0, 1)
+            if "visual_right" in self._channels:
+                idx = self._channels["visual_right"]
+                if len(idx) > 0:
+                    rates[idx] = base + (max_r - base) * np.clip(right_lum, 0, 1)
 
     def _encode_flat(self, obs: BodyObservation, rates: np.ndarray):
         """Fallback: v1-style flat encoding (for backward compatibility)."""
