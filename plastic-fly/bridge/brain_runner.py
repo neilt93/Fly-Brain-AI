@@ -59,6 +59,7 @@ class Brian2BrainRunner:
         w_syn: float = 0.275,
         f_poi: float = 250,
         warmup_ms: float = 200.0,
+        shuffle_seed: int | None = None,
     ):
         from bridge.config import BridgeConfig
         cfg = BridgeConfig()
@@ -70,8 +71,10 @@ class Brian2BrainRunner:
 
         self.sensory_ids = np.asarray(sensory_neuron_ids, dtype=np.int64)
         self.readout_ids = np.asarray(readout_neuron_ids, dtype=np.int64)
+        self.shuffle_seed = shuffle_seed
 
-        print(f"Brian2BrainRunner: building 139k neuron network...")
+        label = "SHUFFLED (seed=%d)" % shuffle_seed if shuffle_seed is not None else "real"
+        print(f"Brian2BrainRunner: building 139k neuron network ({label})...")
         t0 = time()
         self._build_network(path_comp, path_con, w_syn, f_poi)
         print(f"  Network ready in {time() - t0:.1f}s "
@@ -141,10 +144,14 @@ class Brian2BrainRunner:
             self.neurons, self.neurons, 'w : volt',
             on_pre='g += w', delay=params['t_dly'], name='synapses',
         )
-        self.synapses.connect(
-            i=df_con['Presynaptic_Index'].values,
-            j=df_con['Postsynaptic_Index'].values,
-        )
+        pre_idx = df_con['Presynaptic_Index'].values
+        post_idx = df_con['Postsynaptic_Index'].values
+        if self.shuffle_seed is not None:
+            # Shuffle postsynaptic targets to destroy specific wiring
+            # Preserves: out-degree per neuron, total synapse count, weight distribution
+            rng = np.random.RandomState(self.shuffle_seed)
+            post_idx = rng.permutation(post_idx)
+        self.synapses.connect(i=pre_idx, j=post_idx)
         self.synapses.w = df_con['Excitatory x Connectivity'].values * params['w_syn']
 
         self.spike_mon = SpikeMonitor(self.neurons)
