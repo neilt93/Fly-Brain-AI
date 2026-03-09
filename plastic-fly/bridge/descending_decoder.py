@@ -31,7 +31,12 @@ class DescendingDecoder:
         self.stance_ids = set(map(int, stance_ids))
         self.rate_scale = rate_scale
 
-    def decode(self, brain_output: BrainOutput) -> LocomotionCommand:
+    def get_group_rates(self, brain_output: BrainOutput) -> dict:
+        """Extract raw mean firing rates per group (before nonlinearities).
+
+        Returns dict with keys: forward, turn_left, turn_right, rhythm, stance.
+        Values are mean Hz for each group.
+        """
         id_to_rate = {
             int(nid): float(rate)
             for nid, rate in zip(brain_output.neuron_ids, brain_output.firing_rates_hz)
@@ -41,17 +46,22 @@ class DescendingDecoder:
             vals = [id_to_rate[nid] for nid in id_set if nid in id_to_rate]
             return float(np.mean(vals)) if vals else 0.0
 
-        forward = mean_rate(self.forward_ids)
-        left = mean_rate(self.turn_left_ids)
-        right = mean_rate(self.turn_right_ids)
-        rhythm = mean_rate(self.rhythm_ids)
-        stance = mean_rate(self.stance_ids)
+        return {
+            "forward": mean_rate(self.forward_ids),
+            "turn_left": mean_rate(self.turn_left_ids),
+            "turn_right": mean_rate(self.turn_right_ids),
+            "rhythm": mean_rate(self.rhythm_ids),
+            "stance": mean_rate(self.stance_ids),
+        }
+
+    def decode(self, brain_output: BrainOutput) -> LocomotionCommand:
+        rates = self.get_group_rates(brain_output)
 
         return LocomotionCommand(
-            forward_drive=float(max(0.1, np.tanh(forward / self.rate_scale))),
-            turn_drive=float(np.tanh((left - right) / self.rate_scale)),
-            step_frequency=float(1.0 + 1.5 * np.tanh(rhythm / self.rate_scale)),
-            stance_gain=float(1.0 + 0.5 * np.tanh(stance / self.rate_scale)),
+            forward_drive=float(max(0.1, np.tanh(rates["forward"] / self.rate_scale))),
+            turn_drive=float(np.tanh((rates["turn_left"] - rates["turn_right"]) / self.rate_scale)),
+            step_frequency=float(1.0 + 1.5 * np.tanh(rates["rhythm"] / self.rate_scale)),
+            stance_gain=float(1.0 + 0.5 * np.tanh(rates["stance"] / self.rate_scale)),
         )
 
     @classmethod
