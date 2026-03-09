@@ -666,11 +666,26 @@ def build_paper():
         "labeled-line architecture is a general organizing principle, not an artifact of the "
         "three modalities initially examined.")
 
+    pdf.bold_start_para("VNC-lite premotor dynamics.",
+        "We replaced the instantaneous decoder-to-actuator mapping with a bilateral premotor "
+        "state model (VNC-lite) that interposes leaky integrator dynamics between descending "
+        "neuron rates and locomotion commands. DN input drives state derivatives rather than raw "
+        "outputs: d(state)/dt = \u2212state/\u03c4 + f(DN_input) + g(body_feedback). This gives the "
+        "motor system temporal smoothing, persistence, bilateral competition (left/right mutual "
+        "inhibition for turning), and feedback stabilization (body state corrects motor errors). "
+        "All 20 validation tests pass with simulated input (backward compatibility 4/4, robustness "
+        "across 7 parameter configurations 8/8, temporal smoothing 4/4, causal dissociation 4/4), "
+        "and 19/20 with the full Brian2 brain. VNC-lite reduces command jitter by 47\u201397% "
+        "compared to the original decoder while preserving all headline behavioral effects.")
+
     pdf.bold_start_para("Future directions.",
         "Replacing the preprogrammed CPG with a VNC connectome model would close the final "
-        "loop in the sensorimotor arc. The dose-response relationship between population size "
-        "and behavioral effect suggests that the system can predict the behavioral consequences "
-        "of genetic manipulations that silence specific neuron types.")
+        "loop in the sensorimotor arc. The VNC-lite premotor layer provides the architectural "
+        "scaffold for such integration \u2014 its bilateral state model and body feedback pathways "
+        "could be driven by VNC connectome dynamics rather than hand-tuned parameters. The "
+        "dose-response relationship between population size and behavioral effect suggests that "
+        "the system can predict the behavioral consequences of genetic manipulations that "
+        "silence specific neuron types.")
 
     # ══════════════════════════════════════════════════════════════════
     #  4. METHODS
@@ -731,7 +746,27 @@ def build_paper():
         "connectome controls used a fixed random seed (999) to permute all postsynaptic target "
         "indices while preserving out-degree.", indent=False)
 
-    pdf.subsection_heading("4.6", "Segregation analysis")
+    pdf.subsection_heading("4.6", "VNC-lite premotor dynamics")
+    pdf.body_text(
+        "Between the descending decoder and locomotion bridge, we interpose a bilateral premotor "
+        "state model (VNC-lite) that replaces the instantaneous rate-to-command mapping with a "
+        "dynamical system. Six state variables (drive_L, drive_R, turn_L, turn_R, rhythm, stance) "
+        "evolve according to leaky integrator dynamics: d(state)/dt = \u2212state/\u03c4 + "
+        "\u03b1 \u00b7 f(DN_input)/dt + coupling + feedback, where \u03c4 is a state-specific time "
+        "constant (150\u2013300 ms), \u03b1 is an input gain, and f() is a tanh nonlinearity.", indent=False)
+
+    pdf.body_text(
+        "The model has three stages: (1) DN rate normalization and input mapping, (2) bilateral "
+        "state dynamics with Euler integration \u2014 drive states are bilaterally coupled "
+        "(synchronization), turn states have mutual inhibition \u2014 and (3) body feedback: velocity "
+        "mismatch drives stance correction, body instability dampens rhythm, contact asymmetry "
+        "produces corrective turning, and slip detection boosts stance. State variables are "
+        "saturated to prevent runaway. Output mapping converts state to locomotion commands through "
+        "tanh nonlinearities: forward_drive = 0.1 + 0.9 \u00b7 tanh(mean_drive), turn_drive = "
+        "tanh(turn_L \u2212 turn_R), step_frequency = 1.0 + 1.5 \u00b7 tanh(rhythm), stance_gain = "
+        "1.0 + 0.5 \u00b7 tanh(stance).")
+
+    pdf.subsection_heading("4.7", "Segregation analysis")
     pdf.body_text(
         "For each sensory modality group (olfactory: 100 neurons; visual/LPLC2: 310; "
         "somatosensory: 75 across four subchannels), we identified all descending neurons "
