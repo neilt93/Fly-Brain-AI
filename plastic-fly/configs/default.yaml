@@ -1,0 +1,31 @@
+# Default experiment configuration
+experiment:
+  timestep: 0.0001
+  baseline_steps: 5000
+  adaptation_steps: 5000
+  forgetting_steps: 3000
+  baseline_terrain: flat
+  shift_terrain: gapped
+
+controller:
+  hidden_dim: 64
+  sparsity: 0.8
+  cpg_freq: 12.0
+  cpg_amplitude: 0.8
+  plastic_lr: 0.0001
+  plastic_decay: 0.01
+  seed: 42
+
+recording:
+  record_video: false
+  render_playspeed: 0.2
+  log_interval: 50
+  output_dir: logs/terrain_shift
+
+curator:
+  improvement_threshold: 0.1
+  degradation_threshold: 0.15
+  symmetry_change_threshold: 0.1
+  weight_drift_alert: 1.0
+  forgetting_threshold: 0.3
+  log_dir: logs/curator

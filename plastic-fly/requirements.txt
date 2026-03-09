@@ -1,0 +1,9 @@
+flygym>=0.2.0
+numpy>=1.24,<2.0
+matplotlib>=3.7
+scipy>=1.10
+torch>=2.0
+h5py>=3.8
+imageio>=2.31
+imageio-ffmpeg>=0.4
+pyyaml>=6.0

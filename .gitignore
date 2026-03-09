@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs (keep structure, ignore large outputs)
+plastic-fly/logs/
+
+# Data files (large, regeneratable)
+plastic-fly/data/*.npy
+
+# Brain model data (large, from external repo)
+brain-model/Connectivity_783.parquet
+brain-model/Completeness_783.csv
+brain-model/results/
+brain-model/2023_03_23_*.csv
+brain-model/2023_03_23_*.parquet
+brain-model/__pycache__/
+
+# Unity build artifacts
+FlyBrainViz/Library/
+FlyBrainViz/Temp/
+FlyBrainViz/Logs/
+FlyBrainViz/obj/
+FlyBrainViz/Build/
+FlyBrainViz/Builds/
+FlyBrainViz/UserSettings/
+
+# Keep these tracked
+!plastic-fly/data/channel_map.json
+!plastic-fly/data/decoder_groups.json
