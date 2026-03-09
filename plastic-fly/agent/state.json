@@ -1,0 +1,6 @@
+{
+  "stop_requested": false,
+  "mode": "mapping",
+  "max_iterations": 1000000,
+  "current_focus": "replicate causal locomotion effects across 10 seeds and generate the first mapping summary"
+}

@@ -1,0 +1,5 @@
+{
+  "hypothesis": "The causal ablation effects (forward, turn, rhythm, stance) replicate across 10 random seeds with real Brian2 brain.",
+  "planned_action": "Check if logs/robustness_real/robustness_results.json exists. If yes, analyze the results and report effect sizes with 95% CIs. If no, run: python experiments/robustness_study.py --seeds 10 --body-steps 5000 --output-dir logs/robustness_real",
+  "blocking_issue": null
+}
