@@ -116,7 +116,13 @@ def run_single_condition(
 
     cfg = BridgeConfig()
 
-    if readout_version == 3:
+    if readout_version == 5:
+        sensory_ids = np.load(cfg.data_dir / "sensory_ids_v3.npy")
+        readout_ids = np.load(cfg.data_dir / "readout_ids_v5_steering.npy")
+        channel_map_path = cfg.data_dir / "channel_map_v3.json"
+        decoder_path = cfg.data_dir / "decoder_groups_v5_steering.json"
+        rate_scale = 12.0
+    elif readout_version == 3:
         sensory_ids = np.load(cfg.data_dir / "sensory_ids_v3.npy")
         readout_ids = np.load(cfg.data_dir / "readout_ids_v3.npy")
         channel_map_path = cfg.data_dir / "channel_map_v3.json"
@@ -170,9 +176,10 @@ def run_single_condition(
             if terminated or truncated:
                 sim.close()
                 return {"error": "warmup_ended"}
-        except Exception:
+        except Exception as e:
+            print(f"  Physics error: {type(e).__name__}: {e}")
             sim.close()
-            return {"error": "warmup_physics"}
+            return {"error": f"physics_{type(e).__name__}"}
 
     # Main loop
     bspb = cfg.body_steps_per_brain
@@ -223,7 +230,8 @@ def run_single_condition(
         action = locomotion.step(current_cmd)
         try:
             obs, reward, terminated, truncated, info = sim.step(action)
-        except Exception:
+        except Exception as e:
+            print(f"  Physics error: {type(e).__name__}: {e}")
             break
 
         if step % sample_interval == 0:
@@ -279,7 +287,9 @@ def run_ablation_study(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    if readout_version == 3:
+    if readout_version == 5:
+        dec_path = cfg.data_dir / "decoder_groups_v5_steering.json"
+    elif readout_version == 3:
         dec_path = cfg.data_dir / "decoder_groups_v3.json"
     elif readout_version == 2:
         dec_path = cfg.data_dir / "decoder_groups_v2.json"
@@ -500,7 +510,7 @@ if __name__ == "__main__":
                         help="Run only these conditions (default: all)")
     parser.add_argument("--shuffle-seed", type=int, default=None,
                         help="Shuffle connectome postsynaptic targets (control)")
-    parser.add_argument("--readout-version", type=int, default=2, choices=[1, 2, 3])
+    parser.add_argument("--readout-version", type=int, default=2, choices=[1, 2, 3, 5])
     args = parser.parse_args()
 
     run_ablation_study(

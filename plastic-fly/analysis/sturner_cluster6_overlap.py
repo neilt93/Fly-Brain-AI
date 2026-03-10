@@ -20,8 +20,9 @@ both JO and visual sensory input in Sturner's ranking).
 import json
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
-BASE = "C:/Users/neilt/Connectome Fly Brain"
+BASE = str(Path(__file__).resolve().parent.parent.parent)  # up to "Connectome Fly Brain"
 
 # == Load data ==
 print("=" * 80)

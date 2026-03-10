@@ -188,6 +188,8 @@ class Brian2BrainRunner:
 
         # Record spike count before stepping to only read new spikes
         n_before = self.spike_mon.num_spikes
+        if n_before > 50000:
+            print(f"  WARNING: SpikeMonitor has {n_before} spikes — memory growing unbounded")
         self.net.run(sim_ms * self._ms)
 
         # Read firing rates for readout neurons from new spikes only

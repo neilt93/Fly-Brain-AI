@@ -11,8 +11,9 @@ import json
 import pickle
 import os
 from collections import defaultdict
+from pathlib import Path
 
-BASE = "C:/Users/neilt/Connectome Fly Brain"
+BASE = str(Path(__file__).resolve().parent.parent.parent)  # up to "Connectome Fly Brain"
 BRAIN_MODEL = os.path.join(BASE, "brain-model")
 BRIDGE_DATA = os.path.join(BASE, "plastic-fly/data")
 

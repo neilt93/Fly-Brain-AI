@@ -134,7 +134,7 @@ def compute_step_frequency(
 
         nperseg = min(n_steps, 256)
         f, psd = welch(signal, fs=1.0 / dt, nperseg=nperseg)
-        # Find peak frequency (skip DC at f[0])
+        # Skip DC component (index 0) to find oscillatory peak
         if len(psd) > 1:
             peak_idx = np.argmax(psd[1:]) + 1
             freqs_out[leg] = f[peak_idx]

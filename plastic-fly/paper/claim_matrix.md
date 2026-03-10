@@ -39,8 +39,8 @@ We are testing whether our bridge uncovers a more precise organization than the 
 **Action items:**
 - [x] Check DNb05 multimodal input — DONE (visual dominates at 31%)
 - [x] Check DNp44 — DONE (present, 2-hop hygro pathway confirmed)
-- [ ] Rewrite Section 2.8 to frame DNb05 as "dominant direct thermo/hygro target among readout DNs, though a minor fraction of its total multimodal input (1.4%)"
-- [ ] Add DNp44 as the 2-hop hygro pathway (Marin 2020 validation)
+- [x] Rewrite Section 2.8 to frame DNb05 as "dominant direct thermo/hygro target among readout DNs, though a minor fraction of its total multimodal input (1.4%)" — DONE (Section 2.8 Experiment 1 now explicitly frames DNb05 as "dominant direct thermo/hygro target" with 1.4% minor fraction caveat)
+- [x] Add DNp44 as the 2-hop hygro pathway (Marin 2020 validation) — DONE (Section 2.8 now includes DNp44 2-hop paragraph: 15-22 relay neurons, ~2,700 synapses, parallel fast/slow channel interpretation)
 
 ---
 
@@ -65,8 +65,8 @@ We are testing whether our bridge uncovers a more precise organization than the 
 **Action items:**
 - [x] Check steering DN overlap — DONE (4/10, all correctly placed)
 - [ ] Add DNa01 and DNg13 to readout pool for future versions
-- [ ] Check if our 12 shared auditory-visual DNs overlap with Sturner's Cluster 6 types
-- [ ] Frame as "orientation-related shared channel" not "generic convergence"
+- [x] Check if our 12 shared auditory-visual DNs overlap with Sturner's Cluster 6 types — DONE (0/12 in Cluster 6; they fall into Clusters 14 and 16. 6/8 types are genuinely dual-modal at top 50th percentile for both JO and visual. Paper already cites Clusters 14+16 correctly.)
+- [x] Frame as "orientation-related shared channel" not "generic convergence" — DONE (Section 2.7 and 2.8 frame as "intersection of auditory and visual processing streams" for orientation behaviors)
 
 ---
 
@@ -96,8 +96,8 @@ We are testing whether our bridge uncovers a more precise organization than the 
 
 **Action items:**
 - [x] Run olfactory sparsity test — DONE (2.0% weighted, matches Aymanns)
-- [ ] Reframe: olfactory segregation at 1-hop reflects pathway depth + weight distribution
-- [ ] Add synapse-weighted analysis to paper (stronger claim than pure topology)
+- [x] Reframe: olfactory segregation at 1-hop reflects pathway depth + weight distribution — DONE (Section 2.7 and abstract frame as "deeply multi-synaptic pathway architectures" with obligate PN->LH constraint; Discussion cites "architecturally mandated depth")
+- [x] Add synapse-weighted analysis to paper (stronger claim than pure topology) — DONE (Section 2.5 and 2.7 include synapse-count weighted 2-hop analysis, three-tier hierarchy table, and 2.0% matching Aymanns 2022)
 
 ---
 
@@ -114,9 +114,9 @@ We are testing whether our bridge uncovers a more precise organization than the 
 **Required reframe:** Our analysis is at 1-hop direct connectivity, which is a stricter criterion than "information flow rank" (Sturner 2025). The segregation we see is real but reflects direct wiring, not total functional connectivity. At 2-hops, we already show convergence. The correct framing: "At the direct synaptic level, sensory-to-DN connectivity is highly specific. This specificity is diluted at each additional synaptic layer, consistent with Sturner et al. (2025) finding that most DN types are multimodal when assessed by information flow distance."
 
 **Action items:**
-- [ ] Compare our Jaccard values at 1-hop vs 2-hop against Sturner's cluster analysis
-- [ ] Acknowledge that "segregation" is layer-dependent and our finding is specific to direct connectivity
-- [ ] Position as complementary to Sturner, not contradictory
+- [x] Compare our Jaccard values at 1-hop vs 2-hop against Sturner's cluster analysis — DONE (Discussion now includes quantitative comparison: cluster-level Jaccard 2-7x higher than DN-level for som-aud 0.429 vs 0.066, vis-aud 0.400 vs 0.164, som-vis 0.167 vs 0.060; olfactory 0.000 at both levels)
+- [x] Acknowledge that "segregation" is layer-dependent and our finding is specific to direct connectivity — DONE (Discussion: "direct synaptic connectivity is more specific than information-flow metrics suggest, and this specificity dilutes at each additional synaptic layer")
+- [x] Position as complementary to Sturner, not contradictory — DONE (Discussion: "complements the information-flow analysis"; Section 2.5: "complement that approach with direct (1-hop) and synapse-weighted connectivity measurements")
 
 ---
 
@@ -134,7 +134,7 @@ We are testing whether our bridge uncovers a more precise organization than the 
 
 **Action items:**
 - [ ] Blind test: activate our "forward" group DNs — does the predicted behavioral phenotype match Cande 2018's locomotor activation results?
-- [ ] Check if our turn-left/turn-right DN types overlap with Yang 2024's steering DNs (DNa01, DNa02, DNg13)
+- [x] Check if our turn-left/turn-right DN types overlap with Yang 2024's steering DNs (DNa01, DNa02, DNg13) — DONE (4/10 Yang steering DNs in readout: DNa02, DNb05, DNb06 present, all correctly assigned to turning groups. DNa01 and DNg13 absent. See blind test results above and Discussion.)
 
 ---
 

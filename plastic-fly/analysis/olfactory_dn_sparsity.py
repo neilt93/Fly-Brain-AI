@@ -16,9 +16,10 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 import time
+from pathlib import Path
 
 # -- Paths -------------------------------------------------------------------
-BASE = "C:/Users/neilt/Connectome Fly Brain"
+BASE = str(Path(__file__).resolve().parent.parent.parent)  # up to "Connectome Fly Brain"
 CHANNEL_MAP = f"{BASE}/plastic-fly/data/channel_map_v4_looming.json"
 READOUT_IDS = f"{BASE}/plastic-fly/data/readout_ids_v4_looming.npy"
 DECODER_GROUPS = f"{BASE}/plastic-fly/data/decoder_groups_v4_looming.json"
