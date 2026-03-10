@@ -177,22 +177,20 @@ def build_paper():
         "54.5 million synapses) to a MuJoCo biomechanical fly body (FlyGym), with "
         "biologically identified sensory populations encoding stimuli and descending neuron "
         "populations decoding motor commands through an interpretable sensorimotor interface. "
-        "The connectome-structured brain model, when coupled to an embodied fly through this "
-        "transparent interface, produces adaptive and behaviorally specific responses without "
-        "learning or parameter fitting: causal locomotion control (10/10 ablation tests, "
-        "forward drive reduced 53% by targeted silencing), olfactory valence discrimination "
-        "(opposite turning for attractive vs aversive odors, 6/6 tests), and visually guided "
-        "looming escape (contralateral turning with escape index 1.11, abolished 21-fold in "
-        "shuffled connectome controls). Analysis of the descending neuron populations "
-        "underlying these behaviors reveals a structural principle: at the direct "
-        "sensory-to-motor interface, modalities maintain near-complete segregation (Jaccard "
-        "index 0.005\u20130.060 across the original three modalities), with convergence occurring "
-        "one synapse deeper through modality-specific interneuron pools that share zero "
-        "intermediates between visual and olfactory pathways. Extended analysis across six "
-        "sensory modalities (adding 390 auditory, 29 thermosensory, and 74 hygrosensory "
-        "neurons) confirms the labeled-line principle generalizes: olfactory has zero DN "
-        "overlap with all five other modalities, while thermo-hygro converge on a single DN "
-        "type (DNb05) with 10\u00d7 more overlap than shuffled controls."
+        "The connectome-structured brain model produces adaptive responses without learning: "
+        "causal locomotion control (10/10 ablation tests, forward drive reduced 53%), "
+        "olfactory valence discrimination (opposite turning for attractive vs aversive odors, "
+        "6/6 tests), and looming escape (escape index 1.11, abolished 21-fold in shuffled "
+        "controls). Direct (1-hop) sensory-to-motor connectivity is highly modality-specific "
+        "(Jaccard 0.005\u20130.060), with convergence occurring one synapse deeper through "
+        "modality-specific interneuron pools. Olfactory signals reach only 1 DN directly but, "
+        "when weighted by synaptic strength, drive ~2% of the DN population at 2-hops \u2014 "
+        "matching physiological recordings (Aymanns et al. 2022). Thermo-hygro signals "
+        "converge on DNb05, a multimodal steering neuron (Namiki et al. 2018; Yang et al. "
+        "2024) that despite receiving only ~1.4% of its input from thermo/hygro, is the sole "
+        "direct thermo/hygro\u2192DN pathway \u2014 its ablation collapses thermo/hygro throughput "
+        "93\u2013100% (specificity 16.4\u00d7), demonstrating that labeled-line function can emerge "
+        "from a minority input to a multimodal neuron."
     )
     pdf.set_font("tnr", "", 10)
     pdf.set_left_margin(25)
@@ -527,18 +525,22 @@ def build_paper():
 
     pdf.bold_start_para("Thermosensory: an extremely narrow labeled line.",
         "Thermosensory neurons reach only 5 DNs (14 edges, 162 synapses) \u2014 the narrowest "
-        "labeled line of any modality tested. All 5 target DNs are in the turning groups "
+        "direct pathway of any modality tested. All 5 target DNs are in the turning groups "
         "(4 turn-right, 1 turn-left), consistent with thermotaxis. The dominant target is "
-        "DNb05 (151/162 synapses, 93%), suggesting a single-neuron bottleneck for thermal "
-        "motor commands.")
+        "DNb05 (151/162 synapses, 93%). DNb05 is a known multimodal steering neuron "
+        "(Namiki et al. 2018; Yang et al. 2024) whose total input is dominated by visual "
+        "(31%) and central (62%) sources \u2014 thermo/hygro constitutes only ~1.4% of its "
+        "24,866 input synapses. Yet it is the sole direct thermo/hygro\u2192DN pathway.")
 
     pdf.bold_start_para("Hygrosensory: convergence with thermosensory on DNb05.",
-        "Hygrosensory neurons reach just 2 DNs (13 edges, 200 synapses) \u2014 both are DNb05 "
-        "(turn-right). This is the most specific labeled line: 74 sensory neurons funneling "
-        "through a single descending neuron type. The thermo-hygro Jaccard (0.400) is "
-        "strikingly high, and the shuffled control ratio (0.1\u00d7) confirms this is genuine "
-        "convergence \u2014 10\u00d7 more overlap than chance. Temperature and humidity share a "
-        "dedicated motor output channel, consistent with their joint role in thermoregulation.")
+        "Hygrosensory neurons reach just 2 DNs (13 edges, 200 synapses) \u2014 both are DNb05. "
+        "The thermo-hygro Jaccard (0.400) is 10\u00d7 higher than shuffled controls, confirming "
+        "genuine convergence. Separately, DNp44 \u2014 identified by Marin et al. (2020) as the "
+        "primary hygrosensory descending neuron \u2014 is in our readout pool but receives "
+        "hygrosensory input via a 2-hop pathway through VP projection neurons (15\u201322 relay "
+        "neurons, ~2,700 synapses), not directly. The coexistence of a direct but weak pathway "
+        "(DNb05, 200 synapses) and an indirect but strong pathway (DNp44, ~2,700 at 2-hop) "
+        "suggests parallel thermo/hygro channels operating at different latencies.")
 
     pdf.bold_start_para("Six-modality segregation summary.", "")
 
@@ -555,14 +557,16 @@ def build_paper():
     )
 
     pdf.body_text(
-        "The labeled-line principle scales to six modalities. Olfactory remains completely "
-        "isolated (Jaccard = 0.000 with all five other modalities). The only significant "
-        "cross-modal convergence occurs between thermo-hygro (shared DNb05 target) and "
-        "between auditory-visual (shared turning DNs) \u2014 both cases where rapid multimodal "
-        "integration is biologically relevant. At 2-hops, olfactory and thermo/hygrosensory "
-        "share substantial intermediate overlap (Jaccard 0.287\u20130.306), suggesting that "
-        "chemical and thermal sensing converge at the relay level despite complete separation "
-        "at the DN level.", indent=False)
+        "Direct (1-hop) connectivity is highly modality-specific across all six modalities. "
+        "Olfactory remains the most isolated (Jaccard = 0.000 with all five others), "
+        "consistent with its multi-synaptic pathway architecture and with physiological "
+        "recordings showing only 2\u20135% of DNs encode odor information (Aymanns et al. 2022). "
+        "The two cross-modal convergence points \u2014 thermo-hygro (DNb05) and auditory-visual "
+        "(turning DNs, consistent with Sturner et al. 2025 Cluster 6) \u2014 occur where rapid "
+        "multimodal integration is biologically relevant. At 2-hops, olfactory and "
+        "thermo/hygrosensory share substantial intermediate overlap (Jaccard 0.287\u20130.306), "
+        "consistent with Sturner et al. grouping these modalities into a shared "
+        "information-flow cluster.", indent=False)
 
     # ── 2.8 ──────────────────────────────────────────────────────────
     pdf.subsection_heading("2.8", "Causal bottleneck validation")
@@ -571,21 +575,21 @@ def build_paper():
         "To test whether the structural bottlenecks identified in Section 2.7 have functional "
         "consequences, we performed two targeted silencing experiments.", indent=False)
 
-    pdf.bold_start_para("Experiment 1: DNb05 bottleneck silencing.",
-        "DNb05 is a bilateral descending neuron pair (2 neurons) receiving 93.2% of "
-        "thermosensory and 100% of hygrosensory direct synaptic input. Silencing both DNb05 "
-        "neurons produced complete collapse of hygrosensory throughput (100% of DNs and "
-        "synapses lost) and near-complete collapse of thermosensory throughput (40% of DNs, "
-        "93.2% of synapses). In contrast, somatosensory lost 0.5% of DNs (0.1% synapses), "
-        "visual lost 0%, and olfactory lost 0%. The specificity ratio was 16.4\u00d7: thermo/"
-        "hygro collapse was 16.4 times worse than the next-most-affected modality. This "
-        "confirms that DNb05 serves as a causal bottleneck for environmental sensing "
-        "(consistent with anatomical predictions from Marin et al. 2020), while major "
-        "sensorimotor channels remain functionally intact. All 4/4 tests passed.")
+    pdf.bold_start_para("Experiment 1: DNb05 silencing.",
+        "DNb05 is a bilateral descending neuron pair known as a multimodal steering neuron "
+        "receiving visual (31%), central (62%), auditory (0.8%), hygrosensory (0.8%), and "
+        "thermosensory (0.6%) input (Namiki et al. 2018; Yang et al. 2024). Despite "
+        "thermo/hygro constituting only ~1.4% of its 24,866 input synapses, DNb05 is the "
+        "sole direct target for these modalities. Silencing produced complete hygrosensory "
+        "collapse (100% of DNs and synapses lost) and near-complete thermosensory collapse "
+        "(40% of DNs, 93.2% of synapses). Somatosensory lost 0.5%, visual 0%, olfactory 0% "
+        "\u2014 specificity ratio 16.4\u00d7. This demonstrates that labeled-line function does not "
+        "require dedicated anatomy: a multimodal neuron can serve as a functional bottleneck "
+        "for a minority input modality when it is the sole direct pathway.")
 
-    pdf.bold_start_para("Experiment 2: Auditory-visual shared DN silencing.",
+    pdf.bold_start_para("Experiment 2: Auditory-visual orientation channel silencing.",
         "The 12 DNs shared between auditory and visual modalities (5 turn-left, 7 turn-right; "
-        "DNp01, DNp02, DNp11, DNp55, DNp69, DNg40) were silenced. Auditory lost 29.3% of "
+        "consistent with Sturner et al. 2025 Cluster 6) were silenced. Auditory lost 29.3% of "
         "DN targets and 25.5% of synapses. Visual lost 27.3% of DN targets and 44.2% of "
         "synapses \u2014 nearly half of visual motor output passes through these shared turning "
         "DNs. The impact was turning-specific: auditory turn_right throughput dropped 35.1%, "
@@ -615,11 +619,13 @@ def build_paper():
         "simulation provides a computational baseline against which the contributions of these "
         "additional mechanisms can be measured.")
 
-    pdf.bold_start_para("The segregation principle.",
-        "The most unexpected finding is the near-complete segregation of modality-specific "
-        "descending channels at the direct sensory-to-motor interface (Jaccard 0.005\u20130.060), "
-        "with rapid convergence one synapse deeper. This two-layer architecture has not been "
-        "previously described.")
+    pdf.bold_start_para("Direct connectivity is modality-specific; convergence is layer-dependent.",
+        "At the direct (1-hop) sensory-to-DN interface, connectivity is highly modality-specific "
+        "(Jaccard 0.005\u20130.060), with rapid convergence one synapse deeper. This complements "
+        "Sturner et al. (2025), who found most DN types are multimodal when assessed by "
+        "information-flow ranking. Our analysis adds a finer-grained measurement: direct "
+        "synaptic connectivity is more specific than information-flow metrics suggest, and "
+        "this specificity dilutes at each additional synaptic layer.")
 
     pdf.body_text(
         "Three aspects of the segregation strengthen this interpretation. First, the 13 shared "
@@ -639,11 +645,12 @@ def build_paper():
         "feeding. This emerged from the connectome analysis and was not designed into the decoder.")
 
     pdf.body_text(
-        "No previous study has identified this segregation because it requires both (a) a "
-        "complete connectome to trace all paths and (b) a behavioral readout to identify which "
-        "descending neurons are functionally relevant. Anatomical tracing alone cannot "
-        "distinguish the 186 DNs reached by sensory populations from the 133 that receive no "
-        "direct sensory input.")
+        "This direct-connectivity specificity has not been previously quantified at the "
+        "population level because it requires both (a) a complete connectome to trace all "
+        "paths and (b) a behavioral readout to identify which DNs are functionally relevant. "
+        "Our 1-hop analysis is complementary to, not contradictory with, the multimodal "
+        "convergence at longer path lengths documented by Sturner et al. (2025) and the "
+        "multi-synaptic sensory processing described by Marin et al. (2020).")
 
     pdf.bold_start_para("Limitations.",
         "Our model uses uniform synaptic parameters (weights proportional to synapse count, "
@@ -656,15 +663,17 @@ def build_paper():
         "\u2014 a conservative analysis using the full connectome is warranted. Despite these "
         "simplifications, the system produces robust, stimulus-specific behavior.")
 
-    pdf.bold_start_para("Extended labeled lines.",
-        "The six-modality analysis (Section 2.7) reveals two types of cross-modal convergence. "
-        "Auditory and visual share 12 turning DNs (Jaccard = 0.164) \u2014 both are head-mounted "
-        "sensors that drive rapid orientation. Thermo and hygrosensory converge on DNb05 "
-        "(Jaccard = 0.400, 10\u00d7 above shuffled controls) \u2014 a dedicated thermo-hygro motor "
-        "channel for thermoregulation. Olfactory remains completely isolated from all five "
-        "other modalities (Jaccard = 0.000). These patterns suggest that the connectome\u2019s "
-        "labeled-line architecture is a general organizing principle, not an artifact of the "
-        "three modalities initially examined.")
+    pdf.bold_start_para("Extended modality analysis and the DNb05 principle.",
+        "The six-modality analysis reveals two types of cross-modal convergence at the direct "
+        "level. Auditory and visual share 12 turning DNs (Jaccard = 0.164), consistent with "
+        "Sturner et al. (2025) Cluster 6. Thermo and hygrosensory converge on DNb05 (Jaccard "
+        "= 0.400, 10\u00d7 above shuffled). The DNb05 result is instructive: this multimodal "
+        "steering DN (31% visual input; Namiki et al. 2018; Yang et al. 2024) functions as a "
+        "labeled-line bottleneck for thermo/hygro because it is the sole direct pathway. "
+        "Silencing 2 neurons collapses thermo/hygro throughput 93\u2013100% \u2014 functional "
+        "specificity at the circuit level coexisting with multimodal anatomy at the "
+        "single-neuron level. The Marin et al. (2020) DNp44 hygro pathway operates at 2-hops, "
+        "suggesting parallel fast (direct, weak) and slow (indirect, strong) channels.")
 
     pdf.bold_start_para("VNC-lite premotor dynamics.",
         "We replaced the instantaneous decoder-to-actuator mapping with a bilateral premotor "
@@ -789,6 +798,12 @@ def build_paper():
         "Shiu, P.K. et al. (2023). A leaky integrate-and-fire computational model based on the connectome of the entire adult Drosophila brain. bioRxiv.",
         "Lobato-Rios, V. et al. (2022). NeuroMechFly, a neuromechanical model of adult Drosophila melanogaster. Nature Methods, 19, 620\u2013627.",
         "Wang, F. et al. (2024). FlyGym: A comprehensive toolkit for biomechanical simulations of Drosophila. Nature Methods.",
+        "Namiki, S. et al. (2018). The functional organization of descending sensory-motor pathways in Drosophila. eLife, 7, e34272.",
+        "Cande, J. et al. (2018). Optogenetic dissection of descending behavioral control in Drosophila. eLife, 7, e34275.",
+        "Marin, E.C. et al. (2020). Connectomics analysis reveals first-, second-, and third-order thermosensory and hygrosensory neurons. Curr. Biol., 30, 3167\u20133182.",
+        "Aymanns, F., Chen, C.-L. & Ramdya, P. (2022). Descending neuron population dynamics during odor-evoked and spontaneous behaviors. eLife, 11, e81527.",
+        "Yang, H.H. et al. (2024). Fine-grained descending control of steering in walking Drosophila. Cell, 187, 6290\u20136308.",
+        "St\u00fcrner, T. et al. (2025). Comparative connectomics of Drosophila descending and ascending neurons. Nature, 643, 158\u2013172.",
     ]
     pdf.set_font("tnr", "", 9)
     for i, ref in enumerate(refs, 1):
