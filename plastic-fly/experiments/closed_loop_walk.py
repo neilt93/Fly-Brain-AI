@@ -34,6 +34,7 @@ from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
 from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
+from bridge.vnc_lite import VNCLite, VNCLiteConfig
 
 
 def run_closed_loop(
@@ -42,6 +43,7 @@ def run_closed_loop(
     use_fake_brain: bool = False,
     output_dir: str = "logs/closed_loop",
     seed: int = 42,
+    use_vnc_lite: bool = True,
 ):
     import flygym
 
@@ -71,6 +73,9 @@ def run_closed_loop(
     decoder = DescendingDecoder.from_json(cfg.decoder_groups_path, rate_scale=cfg.rate_scale)
     locomotion = LocomotionBridge(seed=seed)
     adapter = FlyGymAdapter()
+    vnc = VNCLite() if use_vnc_lite else None
+    if vnc:
+        print(f"  Using VNC-lite motor layer")
 
     brain_label = "FAKE" if use_fake_brain else "Brian2 LIF"
     print(f"\nInitializing brain ({brain_label})...")
@@ -135,7 +140,11 @@ def run_closed_loop(
             brain_output = brain.step(brain_input, sim_ms=cfg.brain_dt_ms)
             t_brain += time.time() - tb0
 
-            current_cmd = decoder.decode(brain_output)
+            if vnc:
+                group_rates = decoder.get_group_rates(brain_output)
+                current_cmd = vnc.step(group_rates, dt_s=cfg.brain_dt_ms / 1000.0, body_obs=body_obs)
+            else:
+                current_cmd = decoder.decode(brain_output)
             brain_steps += 1
 
             mean_rate = float(np.mean(brain_output.firing_rates_hz))

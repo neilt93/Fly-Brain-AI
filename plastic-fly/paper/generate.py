@@ -178,7 +178,7 @@ def build_paper():
         "biologically identified sensory populations encoding stimuli and descending neuron "
         "populations decoding motor commands through an interpretable sensorimotor interface. "
         "The connectome-structured brain model produces adaptive responses without learning: "
-        "causal locomotion control (10/10 ablation tests, forward drive reduced 53%), "
+        "causal locomotion control (10/10 ablation tests, forward drive reduced 46%), "
         "olfactory valence discrimination (opposite turning for attractive vs aversive odors, "
         "6/6 tests), and looming escape (escape index 1.11, abolished 21-fold in shuffled "
         "controls). Direct (1-hop) sensory-to-motor connectivity is highly modality-specific "
@@ -313,9 +313,9 @@ def build_paper():
     pdf.add_table(
         ["Ablation", "Command effect", "Behavioral effect"],
         [
-            ["Forward silenced", "Fwd drive: 0.90 \u2192 0.10 (\u221289%)", "Distance: 18.9 \u2192 9.0 mm (\u221253%)"],
-            ["Turn-left silenced", "Turn shifts rightward", "Heading shifts rightward"],
-            ["Turn-right silenced", "Turn shifts leftward", "Heading shifts leftward"],
+            ["Forward silenced", "Fwd drive: 0.97 \u2192 0.10 (\u221290%)", "Distance: 20.6 \u2192 11.2 mm (\u221246%)"],
+            ["Turn-left silenced", "Turn shifts rightward", "Heading: +129.6\u00b0 rightward"],
+            ["Turn-right silenced", "Turn shifts leftward", "Heading: \u2212137.0\u00b0 leftward"],
             ["Rhythm silenced", "Step freq: 2.05 \u2192 1.00 (\u221251%)", "Reduced stepping"],
             ["Stance silenced", "Stance gain: 1.49 \u2192 1.00 (\u221233%)", "Altered contact"],
         ],
