@@ -2,17 +2,31 @@
 Closed-loop brain-body walking experiment.
 
 body state → sensory encoder → brain model → descending decoder
-→ locomotion bridge (VNC) → FlyGym body
+→ motor layer → FlyGym body
+
+Motor layer modes:
+  1. CPG (default): DescendingDecoder → VNC-lite → LocomotionBridge (PreprogrammedSteps)
+  2. VNC connectome: DescendingDecoder → VNCBridge (MANC Brian2 LIF → MN decoder)
+     This replaces the CPG with a real connectome-constrained VNC.
 
 Usage:
     # First: generate neuron population files
     python scripts/select_populations.py
 
-    # Then: run with fake brain (test loop without Brian2)
+    # CPG mode (default): fake brain
     python experiments/closed_loop_walk.py --fake-brain
 
-    # Then: run with real brain
+    # CPG mode: real brain
     python experiments/closed_loop_walk.py
+
+    # VNC mode: fake brain + fake VNC (test loop)
+    python experiments/closed_loop_walk.py --fake-brain --use-vnc-fake
+
+    # VNC mode: real brain + fake VNC (test MN decoder)
+    python experiments/closed_loop_walk.py --use-vnc-fake
+
+    # VNC mode: real brain + real VNC (full connectome)
+    python experiments/closed_loop_walk.py --use-vnc
 
     # Longer run
     python experiments/closed_loop_walk.py --body-steps 10000
@@ -32,9 +46,7 @@ from bridge.interfaces import LocomotionCommand
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
-from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
-from bridge.vnc_lite import VNCLite, VNCLiteConfig
 
 
 def run_closed_loop(
@@ -44,6 +56,7 @@ def run_closed_loop(
     output_dir: str = "logs/closed_loop",
     seed: int = 42,
     use_vnc_lite: bool = True,
+    motor_mode: str = "cpg",  # "cpg", "vnc", "vnc-fake"
 ):
     import flygym
 
@@ -71,11 +84,28 @@ def run_closed_loop(
         encoder = SensoryEncoder(sensory_ids, max_rate_hz=cfg.max_rate_hz)
         print(f"  Using flat encoder (v1 fallback)")
     decoder = DescendingDecoder.from_json(cfg.decoder_groups_path, rate_scale=cfg.rate_scale)
-    locomotion = LocomotionBridge(seed=seed)
     adapter = FlyGymAdapter()
-    vnc = VNCLite() if use_vnc_lite else None
-    if vnc:
-        print(f"  Using VNC-lite motor layer")
+
+    # --- Motor layer setup ---
+    use_vnc = motor_mode in ("vnc", "vnc-fake")
+    vnc_bridge = None
+    locomotion = None
+    vnc_lite = None
+
+    if use_vnc:
+        from bridge.vnc_bridge import VNCBridge
+        use_fake_vnc = (motor_mode == "vnc-fake")
+        vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc)
+        motor_label = f"VNC ({'fake' if use_fake_vnc else 'MANC Brian2'})"
+        print(f"  Using VNC connectome bridge ({motor_label})")
+    else:
+        from bridge.locomotion_bridge import LocomotionBridge
+        from bridge.vnc_lite import VNCLite
+        locomotion = LocomotionBridge(seed=seed)
+        vnc_lite = VNCLite() if use_vnc_lite else None
+        motor_label = "CPG" + (" + VNC-lite" if vnc_lite else "")
+        if vnc_lite:
+            print(f"  Using VNC-lite motor layer")
 
     brain_label = "FAKE" if use_fake_brain else "Brian2 LIF"
     print(f"\nInitializing brain ({brain_label})...")
@@ -93,28 +123,56 @@ def run_closed_loop(
     sim = flygym.SingleFlySimulation(fly=fly_obj, arena=arena, timestep=1e-4)
     obs, info = sim.reset()
 
-    # Warmup CPG
-    print(f"Warming up locomotion bridge ({warmup_steps} steps)...")
-    locomotion.warmup(0)
-    locomotion.cpg.reset(init_phases=np.array([0, np.pi, 0, np.pi, 0, np.pi]),
-                         init_magnitudes=np.zeros(6))
-    for _ in range(warmup_steps):
-        action = locomotion.step(LocomotionCommand(forward_drive=1.0))
-        try:
-            obs, _, terminated, truncated, info = sim.step(action)
-            if terminated or truncated:
-                print("  Episode ended during warmup!")
+    # VNC body stepping: step VNC at body frequency for smooth oscillation.
+    vnc_body_dt_s = 1e-4  # 0.1ms per body step (matches FlyGym timestep)
+
+    # --- Warmup ---
+    if use_vnc:
+        # VNC mode: initialize MN decoder with FlyGym init pose, then ramp.
+        # The exponential smoothing transitions from init to VNC-driven angles.
+        init_joints = np.array(obs["joints"][0], dtype=np.float64)
+        vnc_bridge.reset(init_angles=init_joints)
+        print(f"Warming up VNC + physics ({warmup_steps} steps, ramp from init pose)...")
+        for i in range(warmup_steps):
+            # Ramp forward drive from 0 to 20 during warmup
+            ramp = min(1.0, i / max(warmup_steps * 0.5, 1.0))
+            neutral_rates = {"forward": 20.0 * ramp, "turn_left": 0.0,
+                             "turn_right": 0.0, "rhythm": 10.0 * ramp,
+                             "stance": 10.0 * ramp}
+            action = vnc_bridge.step(neutral_rates, dt_s=vnc_body_dt_s)
+            try:
+                obs, _, terminated, truncated, info = sim.step(action)
+                if terminated or truncated:
+                    print("  Episode ended during warmup!")
+                    sim.close()
+                    return None
+            except Exception as e:
+                print(f"  Physics error during warmup step {i}: {e}")
                 sim.close()
                 return None
-        except Exception as e:
-            print(f"  Physics error during warmup: {e}")
-            sim.close()
-            return None
+    else:
+        # CPG mode: standard CPG warmup
+        print(f"Warming up locomotion bridge ({warmup_steps} steps)...")
+        locomotion.warmup(0)
+        locomotion.cpg.reset(init_phases=np.array([0, np.pi, 0, np.pi, 0, np.pi]),
+                             init_magnitudes=np.zeros(6))
+        for _ in range(warmup_steps):
+            action = locomotion.step(LocomotionCommand(forward_drive=1.0))
+            try:
+                obs, _, terminated, truncated, info = sim.step(action)
+                if terminated or truncated:
+                    print("  Episode ended during warmup!")
+                    sim.close()
+                    return None
+            except Exception as e:
+                print(f"  Physics error during warmup: {e}")
+                sim.close()
+                return None
 
     # --- Main closed loop ---
     bspb = cfg.body_steps_per_brain
     print(f"\nRunning closed loop: {body_steps} body steps, "
-          f"brain every {bspb} steps ({cfg.brain_dt_ms}ms), {brain_label}")
+          f"brain every {bspb} steps ({cfg.brain_dt_ms}ms), {brain_label}, {motor_label}")
     print()
 
     episode_log = []
@@ -125,6 +183,8 @@ def run_closed_loop(
     end_effector_frames = []
     brain_steps = 0
     current_cmd = LocomotionCommand(forward_drive=1.0)
+    current_group_rates = {"forward": 20.0, "turn_left": 0.0, "turn_right": 0.0,
+                           "rhythm": 10.0, "stance": 10.0}
     log_interval = 50  # record every 50 steps for Unity
 
     t_start = time.time()
@@ -140,23 +200,43 @@ def run_closed_loop(
             brain_output = brain.step(brain_input, sim_ms=cfg.brain_dt_ms)
             t_brain += time.time() - tb0
 
-            if vnc:
-                group_rates = decoder.get_group_rates(brain_output)
-                current_cmd = vnc.step(group_rates, dt_s=cfg.brain_dt_ms / 1000.0, body_obs=body_obs)
+            group_rates = decoder.get_group_rates(brain_output)
+
+            if use_vnc:
+                # VNC mode: step VNC at brain frequency, cache for body steps
+                current_group_rates = group_rates
+                vnc_bridge.step_brain(group_rates, sim_ms=cfg.brain_dt_ms)
+                # Create a LocomotionCommand for logging (approximate from group rates)
+                current_cmd = LocomotionCommand(
+                    forward_drive=float(np.tanh(group_rates["forward"] / cfg.rate_scale)),
+                    turn_drive=float(np.tanh((group_rates["turn_left"] - group_rates["turn_right"]) / cfg.rate_scale)),
+                    step_frequency=1.0,
+                    stance_gain=1.0,
+                )
+            elif vnc_lite:
+                current_cmd = vnc_lite.step(group_rates, dt_s=cfg.brain_dt_ms / 1000.0, body_obs=body_obs)
             else:
                 current_cmd = decoder.decode(brain_output)
+
             brain_steps += 1
 
             mean_rate = float(np.mean(brain_output.firing_rates_hz))
             active = int(np.sum(brain_output.firing_rates_hz > 0))
 
             if brain_steps % 5 == 1:
-                print(f"  brain #{brain_steps:3d}: "
-                      f"fwd={current_cmd.forward_drive:+.3f} "
-                      f"turn={current_cmd.turn_drive:+.3f} "
-                      f"freq={current_cmd.step_frequency:.2f} "
-                      f"stance={current_cmd.stance_gain:.2f} "
-                      f"| rate={mean_rate:.0f}Hz active={active}/{len(readout_ids)}")
+                if use_vnc:
+                    print(f"  brain #{brain_steps:3d}: "
+                          f"fwd_rate={group_rates['forward']:.0f}Hz "
+                          f"turn_L={group_rates['turn_left']:.0f}Hz "
+                          f"turn_R={group_rates['turn_right']:.0f}Hz "
+                          f"| rate={mean_rate:.0f}Hz active={active}/{len(readout_ids)}")
+                else:
+                    print(f"  brain #{brain_steps:3d}: "
+                          f"fwd={current_cmd.forward_drive:+.3f} "
+                          f"turn={current_cmd.turn_drive:+.3f} "
+                          f"freq={current_cmd.step_frequency:.2f} "
+                          f"stance={current_cmd.stance_gain:.2f} "
+                          f"| rate={mean_rate:.0f}Hz active={active}/{len(readout_ids)}")
 
             episode_log.append({
                 "body_step": step,
@@ -167,10 +247,17 @@ def run_closed_loop(
                 "stance_gain": current_cmd.stance_gain,
                 "readout_mean_hz": mean_rate,
                 "readout_active": active,
+                "motor_mode": motor_mode,
             })
 
         # --- Body step ---
-        action = locomotion.step(current_cmd)
+        if use_vnc:
+            # VNC mode: step VNC at body frequency for smooth oscillation
+            action = vnc_bridge.step(current_group_rates, dt_s=vnc_body_dt_s)
+        else:
+            # CPG mode: step the CPG every body step
+            action = locomotion.step(current_cmd)
+
         try:
             obs, reward, terminated, truncated, info = sim.step(action)
         except Exception as e:
@@ -203,6 +290,7 @@ def run_closed_loop(
     # --- Results ---
     print(f"\nDone: {step+1} body steps, {brain_steps} brain steps in {elapsed:.1f}s")
     print(f"  Brain time: {t_brain:.1f}s ({t_brain/max(elapsed,0.01)*100:.0f}%)")
+    print(f"  Motor mode: {motor_label}")
 
     if len(positions) >= 2:
         start, end = np.array(positions[0]), np.array(positions[-1])
@@ -234,6 +322,7 @@ def run_closed_loop(
         "config": {
             "body_steps": body_steps, "brain_dt_ms": cfg.brain_dt_ms,
             "body_steps_per_brain": bspb, "use_fake_brain": use_fake_brain,
+            "motor_mode": motor_mode,
             "n_sensory": len(sensory_ids), "n_readout": len(readout_ids),
         },
         "summary": {
@@ -254,8 +343,9 @@ def run_closed_loop(
 
         joint_names = list(fly_obj.actuated_joints) if hasattr(fly_obj, 'actuated_joints') else []
 
+        controller_name = f"vnc_connectome" if use_vnc else "brain_driven"
         unity_ts = {
-            "controller": "brain_driven",
+            "controller": controller_name,
             "dt": dt,
             "n_frames": n_frames,
             "positions": positions[:n_frames],
@@ -270,7 +360,8 @@ def run_closed_loop(
         }
 
         # Save to logs
-        unity_file = output_path / "timeseries_brain_driven.json"
+        ts_name = f"timeseries_{controller_name}.json"
+        unity_file = output_path / ts_name
         with open(unity_file, "w") as f:
             json.dump(unity_ts, f)
         print(f"Unity timeseries: {unity_file} ({n_frames} frames)")
@@ -293,7 +384,24 @@ if __name__ == "__main__":
     parser.add_argument("--fake-brain", action="store_true", help="Use fake brain (no Brian2)")
     parser.add_argument("--output-dir", default="logs/closed_loop")
     parser.add_argument("--seed", type=int, default=42)
+
+    # Motor layer mode
+    motor_group = parser.add_mutually_exclusive_group()
+    motor_group.add_argument("--use-vnc", action="store_true",
+                             help="Use real MANC VNC connectome (replaces CPG)")
+    motor_group.add_argument("--use-vnc-fake", action="store_true",
+                             help="Use fake VNC (oscillatory MN patterns, no Brian2 VNC)")
+    parser.add_argument("--no-vnc-lite", action="store_true",
+                        help="Disable VNC-lite in CPG mode (use raw decoder)")
+
     args = parser.parse_args()
+
+    if args.use_vnc:
+        motor_mode = "vnc"
+    elif args.use_vnc_fake:
+        motor_mode = "vnc-fake"
+    else:
+        motor_mode = "cpg"
 
     run_closed_loop(
         body_steps=args.body_steps,
@@ -301,4 +409,6 @@ if __name__ == "__main__":
         use_fake_brain=args.fake_brain,
         output_dir=args.output_dir,
         seed=args.seed,
+        use_vnc_lite=not args.no_vnc_lite,
+        motor_mode=motor_mode,
     )

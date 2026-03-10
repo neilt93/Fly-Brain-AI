@@ -1,0 +1,2954 @@
+{
+  "800061": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "800158": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "800175": {
+    "leg": "LH",
+    "joint_idx": 15,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "800290": {
+    "leg": "RH",
+    "joint_idx": 36,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "800316": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "800504": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "800541": {
+    "leg": "LM",
+    "joint_idx": 8,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "800553": {
+    "leg": "RH",
+    "joint_idx": 36,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "800578": {
+    "leg": "LH",
+    "joint_idx": 18,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "800589": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "800621": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "800636": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "800776": {
+    "leg": "RM",
+    "joint_idx": 29,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "800851": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "800911": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "800962": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "801057": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "801058": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "801079": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "801090": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801148": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801173": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "801234": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "801375": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801469": {
+    "leg": "RF",
+    "joint_idx": 23,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "801492": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "801548": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "801637": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801685": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "801693": {
+    "leg": "RH",
+    "joint_idx": 39,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801715": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "801721": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "801761": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "801768": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "801813": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "801824": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "801915": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "801918": {
+    "leg": "RF",
+    "joint_idx": 23,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "801946": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "802072": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "802215": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "802232": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "802295": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "802361": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "802407": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "802509": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "802521": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "802552": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "802864": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "802964": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "803072": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "803147": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "803226": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "803237": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "803314": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "803412": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "803499": {
+    "leg": "RM",
+    "joint_idx": 29,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "803523": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "803698": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "803704": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "803803": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "803829": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "803830": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "804025": {
+    "leg": "LM",
+    "joint_idx": 11,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "804257": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "804405": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "804465": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "804514": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "804741": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "804851": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "804866": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "804919": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "804941": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "805010": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "805309": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "805313": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "805410": {
+    "leg": "RF",
+    "joint_idx": 23,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "805477": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "805568": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "805598": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "805741": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "805745": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "806204": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "806599": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "806898": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "806923": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "807165": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "807281": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "807640": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "807854": {
+    "leg": "RH",
+    "joint_idx": 35,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "807873": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "807906": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "807972": {
+    "leg": "LM",
+    "joint_idx": 11,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "808011": {
+    "leg": "RF",
+    "joint_idx": 23,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "808453": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "808640": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "808685": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "809604": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "809670": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "809912": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "809935": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "810098": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "810535": {
+    "leg": "RF",
+    "joint_idx": 22,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "810541": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": 1.0,
+    "mn_type": "Ta levator MN",
+    "muscle_group": "tarsus_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "810639": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "810720": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "811652": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "812111": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "812531": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "812872": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "812953": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "813480": {
+    "leg": "LF",
+    "joint_idx": 0,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "813566": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "813603": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "813629": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "813755": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "814163": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "814489": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "814942": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "815097": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "815246": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "815344": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "815498": {
+    "leg": "LH",
+    "joint_idx": 18,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "815678": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "815854": {
+    "leg": "RF",
+    "joint_idx": 21,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "815958": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "816018": {
+    "leg": "LM",
+    "joint_idx": 7,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "816215": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "816222": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "816404": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "816648": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817210": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": 1.0,
+    "mn_type": "Ta levator MN",
+    "muscle_group": "tarsus_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817283": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "817347": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817374": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "817509": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817595": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817640": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "817655": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "817681": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "818057": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "818295": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "818389": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "818399": {
+    "leg": "LH",
+    "joint_idx": 16,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "818553": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "818719": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "818842": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "818996": {
+    "leg": "RM",
+    "joint_idx": 30,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "819112": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "819203": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "819278": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "819384": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "819674": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "819869": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "820110": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": 1.0,
+    "mn_type": "Ta levator MN",
+    "muscle_group": "tarsus_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "820130": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "820350": {
+    "leg": "LH",
+    "joint_idx": 18,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "820668": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "820764": {
+    "leg": "LM",
+    "joint_idx": 11,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "820896": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": 1.0,
+    "mn_type": "Ta levator MN",
+    "muscle_group": "tarsus_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "821154": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "821291": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "821375": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "821449": {
+    "leg": "RH",
+    "joint_idx": 39,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "821635": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "821769": {
+    "leg": "RM",
+    "joint_idx": 32,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "822013": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "822047": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "822092": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "822274": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "822945": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "823132": {
+    "leg": "RM",
+    "joint_idx": 32,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "823168": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "823281": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "823405": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "823665": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "823739": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "824041": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "824104": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "824315": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "824689": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "824997": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "825485": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "825516": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "825681": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "825721": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "826996": {
+    "leg": "LM",
+    "joint_idx": 11,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "827188": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "827968": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "828939": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "828978": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "829873": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "830039": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "830480": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "830514": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "832490": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "833140": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "835074": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "837745": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "838321": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "840530": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "840740": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "840981": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "843389": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "852673": {
+    "leg": "RM",
+    "joint_idx": 32,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "856359": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "857751": {
+    "leg": "LH",
+    "joint_idx": 18,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "858248": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "860084": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "867630": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "867926": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "890541": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "896719": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "902310": {
+    "leg": "LH",
+    "joint_idx": 15,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "902492": {
+    "leg": "LM",
+    "joint_idx": 8,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "902719": {
+    "leg": "RM",
+    "joint_idx": 29,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "902962": {
+    "leg": "RH",
+    "joint_idx": 39,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "903010": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "903158": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "903159": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "903298": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "903363": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "903579": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "903642": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "903643": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "903689": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "904184": {
+    "leg": "LH",
+    "joint_idx": 14,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "904657": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Sternotrochanter MN",
+    "muscle_group": "trochanter_depressor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "905145": {
+    "leg": "RM",
+    "joint_idx": 32,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "905235": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "905421": {
+    "leg": "LM",
+    "joint_idx": 8,
+    "direction": -1.0,
+    "mn_type": "Pleural remotor/abductor MN",
+    "muscle_group": "coxa_remotor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "905487": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "905586": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "905661": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "905849": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "905928": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "906235": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "907256": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "907443": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "907848": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "908094": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "908673": {
+    "leg": "RM",
+    "joint_idx": 32,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "908762": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "909078": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": 1.0,
+    "mn_type": "Tr extensor MN",
+    "muscle_group": "trochanter_extensor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "909255": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "909371": {
+    "leg": "RM",
+    "joint_idx": 28,
+    "direction": -1.0,
+    "mn_type": "Sternal adductor MN",
+    "muscle_group": "coxa_adductor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "909521": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "909618": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "909713": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "909831": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "910095": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "910178": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "910296": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "910334": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "911134": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "911453": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "912694": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "914655": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "914837": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "914852": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "919509": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": 1.0,
+    "mn_type": "Sternal anterior rotator MN",
+    "muscle_group": "coxa_ant_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "924142": {
+    "leg": "RM",
+    "joint_idx": 31,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "924189": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "924716": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 1.0,
+    "mn_type": "Tergotr. MN",
+    "muscle_group": "trochanter_levator",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "927808": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "927828": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "928579": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": 1.0,
+    "mn_type": "Ti extensor MN",
+    "muscle_group": "tibia_extensor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "929376": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "934091": {
+    "leg": "LF",
+    "joint_idx": 1,
+    "direction": 1.0,
+    "mn_type": "Tergopleural/Pleural promotor MN",
+    "muscle_group": "coxa_promotor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "934519": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050003192": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050005026": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050013311": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050013851": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050015101": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050031705": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050032839": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050038433": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050080384": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050088257": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050091102": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050091581": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050098047": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050100010": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050102118": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050111955": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": 1.0,
+    "mn_type": "Ta levator MN",
+    "muscle_group": "tarsus_levator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050115387": {
+    "leg": "LF",
+    "joint_idx": 5,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050123559": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050126678": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050139141": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050156705": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050160514": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050166426": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050174251": {
+    "leg": "RH",
+    "joint_idx": 39,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050189039": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050194310": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050202461": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050203465": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": 0.5,
+    "mn_type": "ltm MN",
+    "muscle_group": "long_tendon_mixed",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050233038": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050239701": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050248133": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050251718": {
+    "leg": "RF",
+    "joint_idx": 25,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050263576": {
+    "leg": "LH",
+    "joint_idx": 19,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050268065": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050303231": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Ti flexor MN",
+    "muscle_group": "tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050306082": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050335829": {
+    "leg": "LF",
+    "joint_idx": 2,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050349786": {
+    "leg": "RF",
+    "joint_idx": 24,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050380236": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050403926": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050460102": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050493413": {
+    "leg": "RH",
+    "joint_idx": 37,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1050607195": {
+    "leg": "LM",
+    "joint_idx": 11,
+    "direction": -1.0,
+    "mn_type": "Fe reductor MN",
+    "muscle_group": "femur_reductor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "1050615112": {
+    "leg": "LF",
+    "joint_idx": 4,
+    "direction": 1.0,
+    "mn_type": "ltm2-femur MN",
+    "muscle_group": "long_tendon_femur",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050660827": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1050669248": {
+    "leg": "LM",
+    "joint_idx": 10,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "1050730563": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1050815462": {
+    "leg": "RF",
+    "joint_idx": 27,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1050938258": {
+    "leg": "RH",
+    "joint_idx": 38,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  },
+  "1051054875": {
+    "leg": "LM",
+    "joint_idx": 9,
+    "direction": -1.0,
+    "mn_type": "Sternal posterior rotator MN",
+    "muscle_group": "coxa_post_rotator",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "1051062549": {
+    "leg": "LF",
+    "joint_idx": 6,
+    "direction": -1.0,
+    "mn_type": "Ta depressor MN",
+    "muscle_group": "tarsus_depressor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1051236875": {
+    "leg": "LH",
+    "joint_idx": 17,
+    "direction": -1.0,
+    "mn_type": "Acc. tr flexor MN",
+    "muscle_group": "acc_trochanter_flexor",
+    "neuromere": "T3",
+    "side": "L"
+  },
+  "1051356801": {
+    "leg": "LM",
+    "joint_idx": 12,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "L"
+  },
+  "1051367796": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1051670893": {
+    "leg": "LF",
+    "joint_idx": 3,
+    "direction": -1.0,
+    "mn_type": "Tr flexor MN",
+    "muscle_group": "trochanter_flexor",
+    "neuromere": "T1",
+    "side": "L"
+  },
+  "1052521030": {
+    "leg": "RM",
+    "joint_idx": 33,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T2",
+    "side": "R"
+  },
+  "1057471940": {
+    "leg": "RF",
+    "joint_idx": 26,
+    "direction": 0.5,
+    "mn_type": "ltm1-tibia MN",
+    "muscle_group": "long_tendon_tibia",
+    "neuromere": "T1",
+    "side": "R"
+  },
+  "1059707690": {
+    "leg": "RH",
+    "joint_idx": 40,
+    "direction": -1.0,
+    "mn_type": "Acc. ti flexor MN",
+    "muscle_group": "acc_tibia_flexor",
+    "neuromere": "T3",
+    "side": "R"
+  }
+}
