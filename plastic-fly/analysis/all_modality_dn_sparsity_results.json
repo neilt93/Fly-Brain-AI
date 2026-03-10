@@ -1,0 +1,67 @@
+{
+  "description": "Synapse-weighted hop analysis for all 6 sensory modalities",
+  "total_readout_dns": 350,
+  "threshold": "10% of max weighted drive",
+  "modalities": [
+    {
+      "modality": "Somatosensory",
+      "n_neurons": 75,
+      "hop1_dns": 186,
+      "hop1_pct": 53.142857142857146,
+      "hop2_topo_dns": 350,
+      "hop2_topo_pct": 100.0,
+      "hop2_weighted_dns": 201,
+      "hop2_weighted_pct": 57.42857142857143
+    },
+    {
+      "modality": "Visual",
+      "n_neurons": 310,
+      "hop1_dns": 44,
+      "hop1_pct": 12.571428571428571,
+      "hop2_topo_dns": 304,
+      "hop2_topo_pct": 86.85714285714286,
+      "hop2_weighted_dns": 47,
+      "hop2_weighted_pct": 13.428571428571429
+    },
+    {
+      "modality": "Olfactory",
+      "n_neurons": 100,
+      "hop1_dns": 1,
+      "hop1_pct": 0.2857142857142857,
+      "hop2_topo_dns": 175,
+      "hop2_topo_pct": 50.0,
+      "hop2_weighted_dns": 7,
+      "hop2_weighted_pct": 2.0
+    },
+    {
+      "modality": "Auditory",
+      "n_neurons": 390,
+      "hop1_dns": 41,
+      "hop1_pct": 11.714285714285714,
+      "hop2_topo_dns": 315,
+      "hop2_topo_pct": 90.0,
+      "hop2_weighted_dns": 64,
+      "hop2_weighted_pct": 18.285714285714285
+    },
+    {
+      "modality": "Thermosensory",
+      "n_neurons": 29,
+      "hop1_dns": 5,
+      "hop1_pct": 1.4285714285714286,
+      "hop2_topo_dns": 194,
+      "hop2_topo_pct": 55.42857142857143,
+      "hop2_weighted_dns": 6,
+      "hop2_weighted_pct": 1.7142857142857142
+    },
+    {
+      "modality": "Hygrosensory",
+      "n_neurons": 74,
+      "hop1_dns": 2,
+      "hop1_pct": 0.5714285714285714,
+      "hop2_topo_dns": 177,
+      "hop2_topo_pct": 50.57142857142857,
+      "hop2_weighted_dns": 8,
+      "hop2_weighted_pct": 2.2857142857142856
+    }
+  ]
+}
