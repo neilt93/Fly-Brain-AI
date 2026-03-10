@@ -114,8 +114,13 @@ def run_closed_loop(
 
     episode_log = []
     positions = []
+    joint_angle_frames = []
+    contact_frames = []
+    contact_binary_frames = []
+    end_effector_frames = []
     brain_steps = 0
     current_cmd = LocomotionCommand(forward_drive=1.0)
+    log_interval = 50  # record every 50 steps for Unity
 
     t_start = time.time()
     t_brain = 0.0
@@ -163,8 +168,21 @@ def run_closed_loop(
             print(f"  Physics error at step {step}: {e}")
             break
 
-        if step % 50 == 0:
+        if step % log_interval == 0:
             positions.append(np.array(obs["fly"][0]).tolist())
+            joint_angle_frames.append(np.array(obs["joints"][0]).tolist())
+            # Reduce 30x3 contact forces to 6 per-leg magnitudes
+            raw_cf = np.array(obs["contact_forces"])  # (30, 3)
+            per_leg = []
+            per_leg_binary = []
+            for leg_i in range(6):
+                leg_forces = raw_cf[leg_i*5:(leg_i+1)*5]  # 5 contact points per leg
+                mag = float(np.linalg.norm(leg_forces))
+                per_leg.append(mag)
+                per_leg_binary.append(1.0 if mag > 0.1 else 0.0)
+            contact_frames.append(per_leg)
+            contact_binary_frames.append(per_leg_binary)
+            end_effector_frames.append(np.array(obs["end_effectors"]).tolist())
 
         if terminated or truncated:
             print(f"  Episode ended at step {step}")
@@ -219,6 +237,42 @@ def run_closed_loop(
     with open(output_path / "closed_loop_results.json", "w") as f:
         json.dump(results, f, indent=2)
     print(f"\nSaved to {output_path}/closed_loop_results.json")
+
+    # --- Export Unity timeseries ---
+    if joint_angle_frames:
+        n_frames = len(joint_angle_frames)
+        dt = log_interval * 1e-4  # timestep * log_interval
+
+        joint_names = list(fly_obj.actuated_joints) if hasattr(fly_obj, 'actuated_joints') else []
+
+        unity_ts = {
+            "controller": "brain_driven",
+            "dt": dt,
+            "n_frames": n_frames,
+            "positions": positions[:n_frames],
+            "contacts": contact_binary_frames[:n_frames],
+            "contact_forces": contact_frames[:n_frames],
+            "end_effectors": end_effector_frames[:n_frames],
+            "joint_angles": joint_angle_frames[:n_frames],
+            "joint_names": joint_names,
+            "tripod_score": [0.0] * n_frames,
+            "weight_drifts": [],
+            "perturbation_idx": 0,
+        }
+
+        # Save to logs
+        unity_file = output_path / "timeseries_brain_driven.json"
+        with open(unity_file, "w") as f:
+            json.dump(unity_ts, f)
+        print(f"Unity timeseries: {unity_file} ({n_frames} frames)")
+
+        # Copy to Unity Resources
+        unity_res = Path(__file__).resolve().parent.parent.parent / "FlyBrainViz" / "Assets" / "Resources"
+        if unity_res.exists():
+            import shutil
+            dst = unity_res / "timeseries_plastic.json"
+            shutil.copy2(unity_file, dst)
+            print(f"Copied to {dst}")
 
     return results
 
