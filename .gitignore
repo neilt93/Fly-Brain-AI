@@ -28,6 +28,10 @@ plastic-fly/logs/
 
 # Data files (large, regeneratable)
 plastic-fly/data/*.npy
+plastic-fly/data/manc/*.feather
+
+# Local settings
+.claude/
 
 # Brain model data (large, from external repo)
 brain-model/Connectivity_783.parquet

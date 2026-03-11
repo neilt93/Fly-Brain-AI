@@ -149,10 +149,10 @@ class VNCBridge:
                 osc = np.sin(2.0 * np.pi * freq * t_s + phase)
 
                 if is_ext:
-                    # direction > 0 = protraction/flexion: active during swing
+                    # Swing-phase group: active when osc < 0
                     mod = max(0.0, 0.5 - 0.5 * osc)
                 else:
-                    # direction < 0 = retraction/extension: active during stance
+                    # Stance-phase group: active when osc > 0
                     mod = max(0.0, 0.5 + 0.5 * osc)
 
                 # Connectome gain: Brian2 tonic rate determines relative MN drive.
@@ -230,40 +230,23 @@ class VNCBridge:
         self._step_count += 1
         return action
 
-    def step_brain(self, group_rates: dict, sim_ms: float = 20.0) -> dict:
+    def step_brain(self, group_rates: dict, sim_ms: float = 20.0) -> None:
         """Run VNC simulation at brain-step frequency.
 
         For Brian2 mode: runs the Brian2 network and caches tonic MN output.
         Rhythm modulation is NOT applied here (done at body step frequency).
+        Does NOT call mn_decoder.decode() — that happens in step() to avoid
+        advancing smoothing state at the wrong frequency.
 
         Args:
             group_rates: DN group firing rates from decoder
             sim_ms: Simulation window in milliseconds
-
-        Returns:
-            {'joints': ndarray(42), 'adhesion': ndarray(6)}
         """
         vnc_output = self.vnc.step(
             VNCInput(group_rates=group_rates), sim_ms=sim_ms
         )
         self._cached_tonic_output = vnc_output
         self._cached_group_rates = group_rates
-
-        # Also apply rhythm and decode for the return value
-        t_s = self._body_time_ms / 1000.0
-        if self._is_brian2:
-            modulated = self._apply_rhythm(vnc_output, group_rates, t_s)
-            action = self.mn_decoder.decode(
-                mn_body_ids=modulated.mn_body_ids,
-                firing_rates_hz=modulated.firing_rates_hz,
-            )
-        else:
-            action = self.mn_decoder.decode(
-                mn_body_ids=vnc_output.mn_body_ids,
-                firing_rates_hz=vnc_output.firing_rates_hz,
-            )
-        self._step_count += 1
-        return action
 
     def reset(self, init_angles: np.ndarray = None):
         """Reset MN decoder smoothing state."""

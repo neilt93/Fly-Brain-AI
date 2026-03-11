@@ -205,9 +205,9 @@ class MotorNeuronDecoder:
         self._joint_neg_count = np.zeros(42, dtype=np.float64)
         for i, (j, d) in enumerate(zip(self._joint_indices, self._directions)):
             if d > 0:
-                self._joint_pos_count[j] += 1.0
+                self._joint_pos_count[j] += abs(d)
             elif d < 0:
-                self._joint_neg_count[j] += 1.0
+                self._joint_neg_count[j] += abs(d)
 
         # Build per-joint amplitude and rest-angle arrays (42,)
         # Calibrated from actual CPG/PreprogrammedSteps output per leg segment
@@ -274,9 +274,9 @@ class MotorNeuronDecoder:
             d = self._directions_arr[idx]
             rate = firing_rates_hz[k]
             if d > 0:
-                pos_sum[j] += rate
+                pos_sum[j] += abs(d) * rate
             elif d < 0:
-                neg_sum[j] += rate
+                neg_sum[j] += abs(d) * rate
 
         # Mean rate per pool (avoid /0)
         pos_mean = np.divide(pos_sum, self._joint_pos_count,
@@ -320,6 +320,11 @@ class MotorNeuronDecoder:
                 self.alpha * raw_angles + (1.0 - self.alpha) * self._prev_angles
             )
         smoothed = self._prev_angles.copy()
+
+        # Force missing joints to 0.0 after smoothing too
+        # (prevents init_angles transient from leaking through)
+        for j in _MISSING_JOINTS:
+            smoothed[j] = 0.0
 
         # ---- Step 4: adhesion from tibia angles ----
         # Adhesion ON when tibia angle is above rest (flexed toward ground).

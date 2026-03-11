@@ -57,6 +57,8 @@ def run_closed_loop(
     seed: int = 42,
     use_vnc_lite: bool = True,
     motor_mode: str = "cpg",  # "cpg", "vnc", "vnc-fake"
+    vnc_shuffle_seed: int | None = None,
+    ablate_groups: list[str] | None = None,
 ):
     import flygym
 
@@ -95,8 +97,12 @@ def run_closed_loop(
     if use_vnc:
         from bridge.vnc_bridge import VNCBridge
         use_fake_vnc = (motor_mode == "vnc-fake")
-        vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc)
+        vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc, shuffle_seed=vnc_shuffle_seed)
         motor_label = f"VNC ({'fake' if use_fake_vnc else 'MANC Brian2'})"
+        if vnc_shuffle_seed is not None:
+            motor_label += f" SHUFFLED(seed={vnc_shuffle_seed})"
+        if ablate_groups:
+            motor_label += f" ABLATE({','.join(ablate_groups)})"
         print(f"  Using VNC connectome bridge ({motor_label})")
     else:
         from bridge.locomotion_bridge import LocomotionBridge
@@ -201,6 +207,12 @@ def run_closed_loop(
             t_brain += time.time() - tb0
 
             group_rates = decoder.get_group_rates(brain_output)
+
+            # Apply ablation: zero out specified DN group rates
+            if ablate_groups:
+                for g in ablate_groups:
+                    if g in group_rates:
+                        group_rates[g] = 0.0
 
             if use_vnc:
                 # VNC mode: step VNC at brain frequency, cache for body steps
@@ -323,6 +335,8 @@ def run_closed_loop(
             "body_steps": body_steps, "brain_dt_ms": cfg.brain_dt_ms,
             "body_steps_per_brain": bspb, "use_fake_brain": use_fake_brain,
             "motor_mode": motor_mode,
+            "vnc_shuffle_seed": vnc_shuffle_seed,
+            "ablate_groups": ablate_groups,
             "n_sensory": len(sensory_ids), "n_readout": len(readout_ids),
         },
         "summary": {
@@ -393,6 +407,10 @@ if __name__ == "__main__":
                              help="Use fake VNC (oscillatory MN patterns, no Brian2 VNC)")
     parser.add_argument("--no-vnc-lite", action="store_true",
                         help="Disable VNC-lite in CPG mode (use raw decoder)")
+    parser.add_argument("--vnc-shuffle", type=int, default=None, metavar="SEED",
+                        help="Shuffle VNC connectivity (random seed)")
+    parser.add_argument("--ablate", nargs="+", default=None, metavar="GROUP",
+                        help="Zero out DN group rates (e.g. --ablate forward)")
 
     args = parser.parse_args()
 
@@ -411,4 +429,6 @@ if __name__ == "__main__":
         seed=args.seed,
         use_vnc_lite=not args.no_vnc_lite,
         motor_mode=motor_mode,
+        vnc_shuffle_seed=args.vnc_shuffle,
+        ablate_groups=args.ablate,
     )

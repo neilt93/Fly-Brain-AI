@@ -19,6 +19,7 @@ python run.py --total-steps 200000    # longer run for Unity viz
 - Warmup: ramp CPG magnitude from 0 over 500 steps
 - Plasticity: lr=1e-5, weight_decay=1.0, cap=0.5, modulation_scale=0.15
 - Structured logging lives in `structlog/` (NOT `logging/` — stdlib conflict)
+- **ALWAYS checkpoint every result** — save incrementally per generation/step, never only at the end
 
 ### Dependencies
 Python 3.10, flygym 1.2.1, torch, numpy 2.0.2, matplotlib, scipy
