@@ -248,7 +248,7 @@ def run_training(
             })
 
             if gen % cfg.log_interval == 0:
-                eps_per_s = (gen + 1) * cfg.pop_size / max(elapsed, 0.1)
+                eps_per_s = (gen - start_gen + 1) * cfg.pop_size / max(elapsed, 0.1)
                 print(f"  gen {gen:4d}: mean={mean_r:+.4f} max={max_r:+.4f} "
                       f"({elapsed:.0f}s, {eps_per_s:.1f} eps/s)")
 

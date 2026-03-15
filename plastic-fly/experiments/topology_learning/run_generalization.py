@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from experiments.topology_learning.config import TopologyConfig
+from experiments.topology_learning.extract_topology import extract_compressed_vnc
 from experiments.topology_learning.vnc_policy import SparseRecurrentPolicy
 
 
@@ -59,11 +60,12 @@ def evaluate_turning(policy, policy_config, n_episodes=5, episode_length=1000):
 
             # Inject lateral bias: boost left-side contact, suppress right-side
             cf = np.array(obs["contact_forces"])
-            per_leg = []
-            for i in range(6):
-                mag = float(np.linalg.norm(cf[i * 5:(i + 1) * 5]))
-                per_leg.append(np.clip(mag / 10.0, 0.0, 1.0))
-            contacts = np.array(per_leg, dtype=np.float32)
+            magnitudes = np.linalg.norm(cf, axis=1) if cf.ndim == 2 else cf
+            per_leg = np.array([
+                np.clip(magnitudes[i * 5:(i + 1) * 5].max() / 10.0, 0.0, 1.0)
+                for i in range(6)
+            ], dtype=np.float32)
+            contacts = per_leg
             # Bias: amplify left legs (0,1,2), suppress right (3,4,5)
             contacts[:3] *= 2.0
             contacts[3:] *= 0.5
@@ -225,7 +227,8 @@ def main():
             "connectome": lambda: build_connectome_policy(
                 topo, cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, joint_params),
             "dense": lambda: build_dense_policy(
-                topo["n_neurons"], cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, joint_params),
+                topo["n_neurons"], cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, joint_params,
+                dn_indices=topo["dn_indices"], mn_indices=topo["mn_indices"]),
             "random_sparse": lambda: build_random_sparse_policy(
                 topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
                 recurrence_steps=cfg.recurrence_steps, joint_params=joint_params),
@@ -275,5 +278,4 @@ def main():
 
 
 if __name__ == "__main__":
-    from experiments.topology_learning.extract_topology import extract_compressed_vnc
     main()

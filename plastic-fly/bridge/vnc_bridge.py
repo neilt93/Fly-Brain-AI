@@ -58,6 +58,7 @@ class VNCBridge:
     def __init__(
         self,
         use_fake_vnc: bool = False,
+        use_minimal_vnc: bool = False,
         vnc_cfg: VNCConfig | None = None,
         mn_mapping_path: str | Path | None = None,
         mn_rate_scale: float = 35.0,
@@ -69,6 +70,7 @@ class VNCBridge:
             use_fake=use_fake_vnc,
             cfg=vnc_cfg,
             shuffle_seed=shuffle_seed,
+            minimal=use_minimal_vnc,
         )
 
         if mn_mapping_path is None:
@@ -80,7 +82,7 @@ class VNCBridge:
         )
 
         self._step_count = 0
-        self._is_brian2 = isinstance(self.vnc, Brian2VNCRunner)
+        self._is_brian2 = hasattr(self.vnc, 'net')
 
         # Cached tonic MN output for Brian2 mode (from last brain step)
         self._cached_tonic_output: VNCOutput | None = None

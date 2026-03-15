@@ -8,6 +8,10 @@ Features:
   - Antithetic sampling (mirrored perturbations)
   - Rank-based fitness shaping
   - Weight decay
+  - Seed-based noise: stores only a random seed, regenerates noise
+    vectors one at a time in both ask() and tell(). Memory usage is
+    O(params) instead of O(pop * params).
+  - float32 throughout to halve memory footprint.
 """
 
 import numpy as np
@@ -33,10 +37,20 @@ class OpenAIES:
         self.weight_decay = weight_decay
 
         # Current parameter vector (mean of search distribution)
-        self.theta = np.zeros(n_params, dtype=np.float64)
+        self.theta = np.zeros(n_params, dtype=np.float32)
+
+        # Noise seed for current generation (regenerated each ask/tell cycle)
+        self._seed = 0
 
         # Generation counter
         self.generation = 0
+
+    def _iter_noise(self):
+        """Yield noise vectors one at a time from the stored seed."""
+        rng = np.random.RandomState(self._seed)
+        half = self.pop_size // 2 if self.antithetic else self.pop_size
+        for _ in range(half):
+            yield rng.randn(self.n_params).astype(np.float32)
 
     def ask(self) -> list[np.ndarray]:
         """Generate population of parameter vectors to evaluate.
@@ -45,19 +59,15 @@ class OpenAIES:
         With antithetic sampling, generates pop_size/2 noise vectors
         and evaluates both +noise and -noise.
         """
+        self._seed = np.random.randint(0, 2**31)
+        population = []
         if self.antithetic:
-            half = self.pop_size // 2
-            self._noise = np.random.randn(half, self.n_params).astype(np.float64)
-            population = []
-            for i in range(half):
-                population.append(self.theta + self.sigma * self._noise[i])
-                population.append(self.theta - self.sigma * self._noise[i])
+            for noise in self._iter_noise():
+                population.append(self.theta + self.sigma * noise)
+                population.append(self.theta - self.sigma * noise)
         else:
-            self._noise = np.random.randn(self.pop_size, self.n_params).astype(np.float64)
-            population = [
-                self.theta + self.sigma * self._noise[i]
-                for i in range(self.pop_size)
-            ]
+            for noise in self._iter_noise():
+                population.append(self.theta + self.sigma * noise)
         return population
 
     def tell(self, rewards: list[float]):
@@ -66,7 +76,7 @@ class OpenAIES:
         Args:
             rewards: list of floats, one per population member from ask().
         """
-        rewards = np.array(rewards, dtype=np.float64)
+        rewards = np.array(rewards, dtype=np.float32)
 
         # Rank-based fitness shaping (more robust than raw rewards)
         ranks = np.zeros_like(rewards)
@@ -76,17 +86,16 @@ class OpenAIES:
         # Normalize to [-0.5, 0.5]
         shaped = (ranks / max(len(ranks) - 1, 1)) - 0.5
 
-        # Compute gradient estimate
+        # Compute gradient estimate by regenerating noise from the same seed
+        grad = np.zeros(self.n_params, dtype=np.float32)
         if self.antithetic:
             half = self.pop_size // 2
-            grad = np.zeros(self.n_params, dtype=np.float64)
-            for i in range(half):
-                grad += (shaped[2 * i] - shaped[2 * i + 1]) * self._noise[i]
+            for i, noise in enumerate(self._iter_noise()):
+                grad += (shaped[2 * i] - shaped[2 * i + 1]) * noise
             grad /= (2 * half * self.sigma)
         else:
-            grad = np.zeros(self.n_params, dtype=np.float64)
-            for i in range(self.pop_size):
-                grad += shaped[i] * self._noise[i]
+            for i, noise in enumerate(self._iter_noise()):
+                grad += shaped[i] * noise
             grad /= (self.pop_size * self.sigma)
 
         # Update with weight decay
@@ -95,7 +104,7 @@ class OpenAIES:
 
     def set_params(self, theta: np.ndarray):
         """Set the current mean parameter vector."""
-        self.theta = theta.copy()
+        self.theta = theta.astype(np.float32).copy()
 
     @property
     def best_params(self) -> np.ndarray:

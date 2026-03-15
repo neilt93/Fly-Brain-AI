@@ -262,7 +262,8 @@ def build_random_sparse_policy(
     """Build policy with random Erdos-Renyi sparsity, same density + I/O as connectome."""
     n = topo["n_neurons"]
     n_edges = topo["adj_indices"].shape[1]
-    density = n_edges / (n * n)
+    # Density over non-diagonal entries (no self-loops)
+    density = n_edges / (n * (n - 1))
 
     rng = np.random.RandomState(seed)
     mask = torch.tensor(rng.random((n, n)) < density, dtype=torch.float32)
@@ -287,15 +288,47 @@ def build_shuffled_policy(
     recurrence_steps: int = 3,
     joint_params: Optional[dict] = None,
 ) -> SparseRecurrentPolicy:
-    """Build policy with shuffled connectome (same degree distribution, permuted targets)."""
+    """Build policy with shuffled connectome via degree-preserving edge swaps.
+
+    Preserves both in-degree and out-degree of every neuron, only rewiring
+    which specific neurons connect.  Uses the configuration-model double-edge
+    swap: pick two edges (u1->v1, u2->v2), swap targets to (u1->v2, u2->v1),
+    reject if it creates a duplicate or self-loop.  Repeat for 5x edge count.
+    """
     n = topo["n_neurons"]
     rng = np.random.RandomState(seed)
-    indices = topo["adj_indices"].clone()
-    indices[1] = torch.tensor(rng.permutation(indices[1].numpy()), dtype=torch.long)
+    pre = topo["adj_indices"][0].numpy().copy()
+    post = topo["adj_indices"][1].numpy().copy()
+    n_edges = len(pre)
+
+    # Build edge set for O(1) duplicate checking
+    edge_set = set(zip(pre.tolist(), post.tolist()))
+
+    n_swaps = 5 * n_edges
+    for _ in range(n_swaps):
+        i, j = rng.randint(0, n_edges, size=2)
+        if i == j:
+            continue
+        # Swap post-synaptic targets
+        new_e1 = (pre[i], post[j])
+        new_e2 = (pre[j], post[i])
+        # Reject self-loops or duplicates
+        if new_e1[0] == new_e1[1] or new_e2[0] == new_e2[1]:
+            continue
+        if new_e1 in edge_set or new_e2 in edge_set:
+            continue
+        # Apply swap
+        old_e1 = (pre[i], post[i])
+        old_e2 = (pre[j], post[j])
+        edge_set.discard(old_e1)
+        edge_set.discard(old_e2)
+        edge_set.add(new_e1)
+        edge_set.add(new_e2)
+        post[i], post[j] = post[j], post[i]
 
     mask = torch.zeros(n, n)
     # mask[post, pre] = 1 — same transpose convention as build_connectome_policy
-    mask[indices[1], indices[0]] = 1.0
+    mask[post, pre] = 1.0
     joint_rest, joint_amp = _joint_arrays(joint_params)
 
     return SparseRecurrentPolicy(

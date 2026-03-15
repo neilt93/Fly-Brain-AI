@@ -1045,10 +1045,21 @@ def create_vnc_runner(
     use_fake: bool = False,
     cfg: VNCConfig | None = None,
     shuffle_seed: int | None = None,
+    minimal: bool = False,
 ) -> "FakeVNCRunner | Brian2VNCRunner":
-    """Factory: returns FakeVNCRunner or Brian2VNCRunner."""
+    """Factory: returns FakeVNCRunner, Brian2VNCRunner, or MinimalVNCRunner."""
     if use_fake:
         return FakeVNCRunner(cfg=cfg)
+    if minimal:
+        from bridge.vnc_minimal import MinimalVNCRunner, MinimalVNCConfig
+        if cfg is None:
+            cfg = MinimalVNCConfig()
+        elif not isinstance(cfg, MinimalVNCConfig):
+            cfg = MinimalVNCConfig(**{
+                k: v for k, v in cfg.__dict__.items()
+                if k in MinimalVNCConfig.__dataclass_fields__
+            })
+        return MinimalVNCRunner(cfg=cfg, shuffle_seed=shuffle_seed)
     return Brian2VNCRunner(cfg=cfg, shuffle_seed=shuffle_seed)
 
 
