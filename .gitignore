@@ -49,6 +49,11 @@ FlyBrainViz/obj/
 FlyBrainViz/Build/
 FlyBrainViz/Builds/
 FlyBrainViz/UserSettings/
+FlyBrainViz/Assets/_Recovery/
+FlyBrainViz/Assets/_Recovery.meta
+
+# Topology learning pycache
+plastic-fly/experiments/topology_learning/__pycache__/
 
 # Keep these tracked
 !plastic-fly/data/channel_map.json
