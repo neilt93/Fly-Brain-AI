@@ -532,7 +532,7 @@ class MinimalVNCRunner:
             self.bg_syn = None
 
         # Spike monitor
-        self.spike_mon = SpikeMonitor(self.neurons)
+        self.spike_mon = SpikeMonitor(self.neurons, record=False)
 
         # Assemble
         net_objects = [
@@ -587,18 +587,14 @@ class MinimalVNCRunner:
 
         self.input_group.rates = new_rates * self._Hz
 
-        n_before = self.spike_mon.num_spikes
+        counts_before = np.array(self.spike_mon.count, dtype=np.int64)
         self.net.run(sim_ms * self._ms)
 
-        tonic_rates = np.zeros(len(self._mn_brian_idx), dtype=np.float32)
-        n_after = self.spike_mon.num_spikes
+        counts_after = np.array(self.spike_mon.count, dtype=np.int64)
         window_s = sim_ms / 1000.0
-
-        if n_after > n_before:
-            new_i = np.array(self.spike_mon.i[n_before:])
-            for j, brian_idx in enumerate(self._mn_brian_idx):
-                count = int(np.sum(new_i == brian_idx))
-                tonic_rates[j] = count / window_s if window_s > 0 else 0.0
+        tonic_rates = np.zeros(len(self._mn_brian_idx), dtype=np.float32)
+        for j, brian_idx in enumerate(self._mn_brian_idx):
+            tonic_rates[j] = float(counts_after[brian_idx] - counts_before[brian_idx]) / window_s if window_s > 0 else 0.0
 
         return VNCOutput(
             mn_body_ids=self._mn_body_ids.copy(),

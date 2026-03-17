@@ -29,7 +29,7 @@ Exponential smoothing prevents jerky joint motion:
     angle_t = alpha * new_angle + (1 - alpha) * angle_{t-1}
 
 Known limitations:
-  - 4 joints unmapped (Tarsus1 for LM, LH, RM, RH) -> held at 0.0
+  - 4 joints unmapped (Tarsus1 for LM, LH, RM, RH) -> held at rest angle
   - Many-to-one mapping: multiple MNs drive the same joint (pool coding)
   - MN body IDs not in the mapping are silently ignored
 """
@@ -79,54 +79,58 @@ JOINT_NAMES_PER_LEG = [
 # Values measured from 1000-step CPG trajectory (forward_drive=1.0).
 # Format: (rest_angle, amplitude) per absolute joint index [0..41]
 _JOINT_PARAMS = {
+    # Symmetrized: L/R rest angles averaged per segment so the decoder
+    # does not introduce a heading bias.  Mirrored joints (roll, yaw)
+    # use the mean magnitude with opposite signs.
+    #
     # LF (T1 left): joints 0-6
-    0:  (+0.475, 0.28),   # Coxa
-    1:  (+1.012, 0.34),   # Coxa_roll
-    2:  (+0.042, 0.18),   # Coxa_yaw
-    3:  (-2.237, 0.50),   # Femur
-    4:  (+0.809, 0.22),   # Femur_roll
-    5:  (+1.760, 0.45),   # Tibia
-    6:  (-0.638, 0.24),   # Tarsus1
+    0:  (+0.450, 0.28),   # Coxa          avg(0.475, 0.425)
+    1:  (+0.993, 0.34),   # Coxa_roll     avg(|1.012|, |0.974|) = 0.993
+    2:  (+0.045, 0.18),   # Coxa_yaw      avg(|0.042|, |0.047|) = 0.045
+    3:  (-2.230, 0.50),   # Femur         avg(2.237, 2.223) = 2.230
+    4:  (+0.815, 0.22),   # Femur_roll    avg(|0.809|, |0.821|) = 0.815
+    5:  (+1.729, 0.45),   # Tibia         avg(1.760, 1.697) = 1.729
+    6:  (-0.661, 0.24),   # Tarsus1       avg(0.638, 0.683) = 0.661
     # LM (T2 left): joints 7-13
-    7:  (+0.087, 0.30),   # Coxa
-    8:  (+1.849, 0.08),   # Coxa_roll
-    9:  (+0.785, 0.13),   # Coxa_yaw
-    10: (-1.485, 0.30),   # Femur
-    11: (+0.011, 0.46),   # Femur_roll
-    12: (+2.030, 0.18),   # Tibia
-    13: (-0.772, 0.26),   # Tarsus1 (unmapped — held at rest)
+    7:  (+0.082, 0.30),   # Coxa          avg(0.087, 0.076)
+    8:  (+1.839, 0.08),   # Coxa_roll     avg(|1.849|, |1.829|) = 1.839
+    9:  (+0.793, 0.13),   # Coxa_yaw      avg(|0.785|, |0.801|) = 0.793
+    10: (-1.492, 0.30),   # Femur         avg(1.485, 1.498) = 1.492
+    11: (+0.057, 0.46),   # Femur_roll    avg(|0.011|, |0.102|) = 0.057
+    12: (+2.051, 0.18),   # Tibia         avg(2.030, 2.071) = 2.051
+    13: (-0.747, 0.26),   # Tarsus1       avg(0.772, 0.722) = 0.747 (unmapped)
     # LH (T3 left): joints 14-20
-    14: (+0.570, 0.25),   # Coxa
-    15: (+2.476, 0.22),   # Coxa_roll
-    16: (+0.370, 0.12),   # Coxa_yaw
-    17: (-1.651, 0.37),   # Femur
-    18: (-0.291, 0.10),   # Femur_roll
-    19: (+1.772, 0.55),   # Tibia
-    20: (-0.082, 0.19),   # Tarsus1 (unmapped)
+    14: (+0.535, 0.25),   # Coxa          avg(0.570, 0.500)
+    15: (+2.454, 0.22),   # Coxa_roll     avg(|2.476|, |2.431|) = 2.454
+    16: (+0.365, 0.12),   # Coxa_yaw      avg(|0.370|, |0.360|) = 0.365
+    17: (-1.708, 0.37),   # Femur         avg(1.651, 1.764) = 1.708
+    18: (-0.291, 0.10),   # Femur_roll    avg(|0.291|, |0.290|) = 0.291
+    19: (+1.829, 0.55),   # Tibia         avg(1.772, 1.886) = 1.829
+    20: (-0.074, 0.19),   # Tarsus1       avg(0.082, 0.065) = 0.074 (unmapped)
     # RF (T1 right): joints 21-27
-    21: (+0.425, 0.28),   # Coxa
-    22: (-0.974, 0.34),   # Coxa_roll (mirrored sign from LF)
-    23: (-0.047, 0.18),   # Coxa_yaw
-    24: (-2.223, 0.50),   # Femur
-    25: (-0.821, 0.22),   # Femur_roll (mirrored)
-    26: (+1.697, 0.45),   # Tibia
-    27: (-0.683, 0.24),   # Tarsus1
+    21: (+0.450, 0.28),   # Coxa          (same as LF)
+    22: (-0.993, 0.34),   # Coxa_roll     (mirrored)
+    23: (-0.045, 0.18),   # Coxa_yaw      (mirrored)
+    24: (-2.230, 0.50),   # Femur         (same as LF)
+    25: (-0.815, 0.22),   # Femur_roll    (mirrored)
+    26: (+1.729, 0.45),   # Tibia         (same as LF)
+    27: (-0.661, 0.24),   # Tarsus1       (same as LF)
     # RM (T2 right): joints 28-34
-    28: (+0.076, 0.30),   # Coxa
-    29: (-1.829, 0.08),   # Coxa_roll (mirrored)
-    30: (-0.801, 0.13),   # Coxa_yaw (mirrored)
-    31: (-1.498, 0.30),   # Femur
-    32: (+0.102, 0.46),   # Femur_roll
-    33: (+2.071, 0.18),   # Tibia
-    34: (-0.722, 0.26),   # Tarsus1 (unmapped)
+    28: (+0.082, 0.30),   # Coxa          (same as LM)
+    29: (-1.839, 0.08),   # Coxa_roll     (mirrored)
+    30: (-0.793, 0.13),   # Coxa_yaw      (mirrored)
+    31: (-1.492, 0.30),   # Femur         (same as LM)
+    32: (+0.057, 0.46),   # Femur_roll    (same as LM, unsigned)
+    33: (+2.051, 0.18),   # Tibia         (same as LM)
+    34: (-0.747, 0.26),   # Tarsus1       (same as LM, unmapped)
     # RH (T3 right): joints 35-41
-    35: (+0.500, 0.25),   # Coxa
-    36: (-2.431, 0.22),   # Coxa_roll (mirrored)
-    37: (-0.360, 0.12),   # Coxa_yaw (mirrored)
-    38: (-1.764, 0.37),   # Femur
-    39: (+0.290, 0.10),   # Femur_roll (mirrored)
-    40: (+1.886, 0.55),   # Tibia
-    41: (-0.065, 0.19),   # Tarsus1 (unmapped)
+    35: (+0.535, 0.25),   # Coxa          (same as LH)
+    36: (-2.454, 0.22),   # Coxa_roll     (mirrored)
+    37: (-0.365, 0.12),   # Coxa_yaw      (mirrored)
+    38: (-1.708, 0.37),   # Femur         (same as LH)
+    39: (+0.291, 0.10),   # Femur_roll    (mirrored, same mag)
+    40: (+1.829, 0.55),   # Tibia         (same as LH)
+    41: (-0.074, 0.19),   # Tarsus1       (same as LH, unmapped)
 }
 
 # Tibia joint-type index within a leg (used for adhesion)
@@ -208,6 +212,18 @@ class MotorNeuronDecoder:
                 self._joint_pos_count[j] += abs(d)
             elif d < 0:
                 self._joint_neg_count[j] += abs(d)
+
+        # Symmetrize MN pool counts between corresponding L/R joints so
+        # asymmetric MANC pool sizes don't introduce heading bias.
+        for li, leg_l in enumerate(["LF", "LM", "LH"]):
+            ri = li + 3  # RF, RM, RH
+            off_l, off_r = LEG_OFFSET[leg_l], LEG_OFFSET[LEGS[ri]]
+            for dof in range(7):
+                jl, jr = off_l + dof, off_r + dof
+                avg_pos = (self._joint_pos_count[jl] + self._joint_pos_count[jr]) / 2.0
+                avg_neg = (self._joint_neg_count[jl] + self._joint_neg_count[jr]) / 2.0
+                self._joint_pos_count[jl] = self._joint_pos_count[jr] = avg_pos
+                self._joint_neg_count[jl] = self._joint_neg_count[jr] = avg_neg
 
         # Build per-joint amplitude and rest-angle arrays (42,)
         # Calibrated from actual CPG/PreprogrammedSteps output per leg segment
@@ -308,9 +324,10 @@ class MotorNeuronDecoder:
             net_drive / self.rate_scale
         )
 
-        # Force missing joints to 0.0
+        # Force missing joints to rest angle (not 0.0 — avoids tarsus
+        # being driven away from its natural pose)
         for j in _MISSING_JOINTS:
-            raw_angles[j] = 0.0
+            raw_angles[j] = self._rest_angle[j]
 
         # ---- Step 3: exponential smoothing ----
         if self._prev_angles is None:
@@ -321,10 +338,9 @@ class MotorNeuronDecoder:
             )
         smoothed = self._prev_angles.copy()
 
-        # Force missing joints to 0.0 after smoothing too
-        # (prevents init_angles transient from leaking through)
+        # Force missing joints to rest angle after smoothing too
         for j in _MISSING_JOINTS:
-            smoothed[j] = 0.0
+            smoothed[j] = self._rest_angle[j]
 
         # ---- Step 4: adhesion from tibia angles ----
         # Adhesion ON when tibia angle is above rest (flexed toward ground).

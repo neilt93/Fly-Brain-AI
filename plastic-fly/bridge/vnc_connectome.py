@@ -926,7 +926,7 @@ class Brian2VNCRunner:
         self._tripod_phases = np.array([0, np.pi, 0, np.pi, 0, np.pi])
 
         # --- Spike monitor ---
-        self.spike_mon = SpikeMonitor(self.neurons)
+        self.spike_mon = SpikeMonitor(self.neurons, record=False)
 
         # --- Assemble network ---
         net_objects = [
@@ -1005,21 +1005,15 @@ class Brian2VNCRunner:
         self.input_group.rates = new_rates * self._Hz
 
         # --- Run simulation ---
-        n_before = self.spike_mon.num_spikes
-        if n_before > 500000:
-            print(f"  WARNING: VNC SpikeMonitor has {n_before} spikes -- memory growing")
+        counts_before = np.array(self.spike_mon.count, dtype=np.int64)
         self.net.run(sim_ms * self._ms)
 
-        # --- Read MN firing rates from new spikes ---
-        tonic_rates = np.zeros(len(self._mn_brian_idx), dtype=np.float32)
-        n_after = self.spike_mon.num_spikes
+        # --- Read MN firing rates via count differencing (O(n_mn), no memory growth) ---
+        counts_after = np.array(self.spike_mon.count, dtype=np.int64)
         window_s = sim_ms / 1000.0
-
-        if n_after > n_before:
-            new_i = np.array(self.spike_mon.i[n_before:])
-            for j, brian_idx in enumerate(self._mn_brian_idx):
-                count = int(np.sum(new_i == brian_idx))
-                tonic_rates[j] = count / window_s if window_s > 0 else 0.0
+        tonic_rates = np.zeros(len(self._mn_brian_idx), dtype=np.float32)
+        for j, brian_idx in enumerate(self._mn_brian_idx):
+            tonic_rates[j] = float(counts_after[brian_idx] - counts_before[brian_idx]) / window_s if window_s > 0 else 0.0
 
         # Return tonic MN rates from Brian2 spikes.
         # Rhythm modulation is applied at body-step frequency by VNCBridge.

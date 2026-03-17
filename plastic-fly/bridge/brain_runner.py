@@ -154,7 +154,7 @@ class Brian2BrainRunner:
         self.synapses.connect(i=pre_idx, j=post_idx)
         self.synapses.w = df_con['Excitatory x Connectivity'].values * params['w_syn']
 
-        self.spike_mon = SpikeMonitor(self.neurons)
+        self.spike_mon = SpikeMonitor(self.neurons, record=False)
 
         n_input = len(self._sensory_brian_idx)
         self.input_group = PoissonGroup(n_input, rates=np.zeros(n_input) * Hz, name='input')
@@ -186,19 +186,16 @@ class Brian2BrainRunner:
 
         self.input_group.rates = new_rates * self._Hz
 
-        # Record spike count before stepping to only read new spikes
-        n_before = self.spike_mon.num_spikes
-        if n_before > 50000:
-            print(f"  WARNING: SpikeMonitor has {n_before} spikes — memory growing unbounded")
+        # Snapshot cumulative counts before stepping
+        counts_before = np.array(self.spike_mon.count, dtype=np.int64)
         self.net.run(sim_ms * self._ms)
 
-        # Read firing rates for readout neurons from new spikes only
+        # Compute per-neuron spike counts for this window only (O(n_readout))
+        counts_after = np.array(self.spike_mon.count, dtype=np.int64)
+        window_s = sim_ms / 1000.0
         readout_rates = np.zeros(len(self._readout_brian_idx), dtype=np.float32)
-        n_after = self.spike_mon.num_spikes
-        if n_after > n_before:
-            new_i = np.array(self.spike_mon.i[n_before:])
-            for j, brian_idx in enumerate(self._readout_brian_idx):
-                readout_rates[j] = float(np.sum(new_i == brian_idx)) / (sim_ms / 1000.0)
+        for j, brian_idx in enumerate(self._readout_brian_idx):
+            readout_rates[j] = float(counts_after[brian_idx] - counts_before[brian_idx]) / window_s
 
         return BrainOutput(
             neuron_ids=self._readout_flyids,
