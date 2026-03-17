@@ -199,7 +199,7 @@ def run_single_neuron_ablations(policy, topo, env, n_sample=100,
         restore_neurons(policy, saved)
 
         deficit = base_dist - result["mean_distance"]
-        effects[idx] = {
+        effects[int(idx)] = {
             "deficit_mm": float(deficit),
             "deficit_frac": float(deficit / max(base_dist, 1e-6)),
             "distance": result["mean_distance"],
