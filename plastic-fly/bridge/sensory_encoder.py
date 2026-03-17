@@ -128,10 +128,11 @@ class SensoryEncoder:
         # Sensors: 0=L antenna, 1=R antenna, 2=L palp, 3=R palp
         if obs.odor_intensity is not None:
             odor = obs.odor_intensity
-            # Use first odor dimension, combine antenna + palp per side
+            # Average across all odor dimensions, combine antenna + palp per side
             if odor.ndim == 2 and odor.shape[1] >= 4:
-                left_odor = float(np.clip((odor[0, 0] + odor[0, 2]) * 0.5, 0, 1))
-                right_odor = float(np.clip((odor[0, 1] + odor[0, 3]) * 0.5, 0, 1))
+                odor_avg = odor.mean(axis=0)  # (4,) — works for single or multi-odor
+                left_odor = float(np.clip((odor_avg[0] + odor_avg[2]) * 0.5, 0, 1))
+                right_odor = float(np.clip((odor_avg[1] + odor_avg[3]) * 0.5, 0, 1))
             elif odor.ndim == 1 and len(odor) >= 4:
                 left_odor = float(np.clip((odor[0] + odor[2]) * 0.5, 0, 1))
                 right_odor = float(np.clip((odor[1] + odor[3]) * 0.5, 0, 1))
@@ -199,7 +200,7 @@ class SensoryEncoder:
             features = np.pad(features, (0, n - len(features)))
         else:
             features = features[:n]
-        rates[:] = ((features + 1.0) * 0.5) * self.max_rate_hz
+        rates[:] = self.baseline_rate_hz + ((features + 1.0) * 0.5) * (self.max_rate_hz - self.baseline_rate_hz)
 
     @classmethod
     def from_channel_map(
