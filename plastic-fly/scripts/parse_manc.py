@@ -227,7 +227,7 @@ def analyze_neurotransmitters(nt):
             if any(k in " ".join(val_strs) for k in ["acetylcholine", "gaba", "glutamate", "serotonin", "dopamine", "octopamine"]):
                 nt_col = col
                 break
-        except:
+        except (AttributeError, ValueError, TypeError):
             pass
 
     if nt_col:

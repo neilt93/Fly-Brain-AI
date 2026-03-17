@@ -21,6 +21,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+
+def _write_json_atomic(path: Path, payload, **kwargs):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, **kwargs)
+    tmp_path.replace(path)
+
+
 from experiments.topology_learning.config import TopologyConfig
 from experiments.topology_learning.extract_topology import extract_compressed_vnc
 from experiments.topology_learning.vnc_policy import SparseRecurrentPolicy
@@ -272,8 +282,7 @@ def main():
 
     # Save
     out_path = log_dir / "generalization.json"
-    with open(out_path, "w") as f:
-        json.dump(results, f, indent=2)
+    _write_json_atomic(out_path, results)
     print(f"\n  Saved: {out_path}")
 
 

@@ -27,6 +27,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
+def _write_json_atomic(path: Path, payload: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
+
 def run_condition(name, body_steps, seed, ablate_groups=None, vnc_shuffle_seed=None,
                   use_fake_brain=False):
     """Run one condition and return results dict."""
@@ -158,9 +166,7 @@ def main():
 
     # Save
     out_path = Path("logs/vnc_validation/summary.json")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump({"results": all_results, "args": vars(args)}, f, indent=2)
+    _write_json_atomic(out_path, {"results": all_results, "args": vars(args)})
     print(f"  Saved: {out_path}")
 
 

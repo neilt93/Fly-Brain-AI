@@ -37,6 +37,16 @@ from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
 from bridge.vnc_lite import VNCLite
 
+
+def _write_json_atomic(path: Path, payload: dict):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
+
 SCENE_NAMES = ["baseline", "loom_left", "loom_right", "odor_attract", "odor_averse"]
 
 STIMULUS_ONSET_STEP = 3000
@@ -91,6 +101,49 @@ def _compute_tripod_score(contact_binary: list) -> float:
     match_a = 1.0 - np.mean(np.abs(c - tripod_a))
     match_b = 1.0 - np.mean(np.abs(c - tripod_b))
     return float(max(match_a, match_b))
+
+
+def _record_frame(obs, positions, joint_angle_frames, contact_binary_frames,
+                  contact_force_frames, end_effector_frames, tripod_scores):
+    """Extract and append one frame of recording data from an observation."""
+    positions.append(np.array(obs["fly"][0]).tolist())
+    joint_angle_frames.append(np.array(obs["joints"][0]).tolist())
+    raw_cf = np.array(obs["contact_forces"])
+    per_leg_forces = []
+    per_leg_binary = []
+    for leg_i in range(6):
+        leg_forces = raw_cf[leg_i * 5:(leg_i + 1) * 5]
+        mag = float(np.linalg.norm(leg_forces))
+        per_leg_forces.append(mag)
+        per_leg_binary.append(1.0 if mag > 0.1 else 0.0)
+    contact_force_frames.append(per_leg_forces)
+    contact_binary_frames.append(per_leg_binary)
+    end_effector_frames.append(np.array(obs["end_effectors"]).tolist())
+    tripod_scores.append(_compute_tripod_score(per_leg_binary))
+
+
+def _save_scene_checkpoint(output_path, scene_name, steps_completed, body_steps,
+                           positions, joint_angle_frames, contact_binary_frames,
+                           contact_force_frames, end_effector_frames, tripod_scores,
+                           joint_names, status):
+    """Write an incremental checkpoint for a scene run."""
+    checkpoint = {
+        "scene": scene_name,
+        "summary": {
+            "steps_completed": steps_completed,
+            "body_steps": body_steps,
+            "status": status,
+        },
+        "n_frames": len(joint_angle_frames),
+        "positions": positions,
+        "joint_angles": joint_angle_frames,
+        "joint_names": joint_names,
+        "contacts": contact_binary_frames,
+        "contact_forces": contact_force_frames,
+        "end_effectors": end_effector_frames,
+        "tripod_score": tripod_scores,
+    }
+    _write_json_atomic(output_path / ("checkpoint_%s.json" % scene_name), checkpoint)
 
 
 # ── Scene configuration ───────────────────────────────────────────────
@@ -385,29 +438,16 @@ def run_scene(
 
         # ── Record every LOG_INTERVAL steps ──
         if step % LOG_INTERVAL == 0:
-            # Position
-            positions.append(np.array(obs["fly"][0]).tolist())
-
-            # Joint angles
-            joint_angle_frames.append(np.array(obs["joints"][0]).tolist())
-
-            # Contact forces: 30x3 -> 6 per-leg magnitudes
-            raw_cf = np.array(obs["contact_forces"])  # (30, 3)
-            per_leg_forces = []
-            per_leg_binary = []
-            for leg_i in range(6):
-                leg_forces = raw_cf[leg_i * 5 : (leg_i + 1) * 5]  # (5, 3)
-                mag = float(np.linalg.norm(leg_forces))
-                per_leg_forces.append(mag)
-                per_leg_binary.append(1.0 if mag > 0.1 else 0.0)
-            contact_force_frames.append(per_leg_forces)
-            contact_binary_frames.append(per_leg_binary)
-
-            # End effectors
-            end_effector_frames.append(np.array(obs["end_effectors"]).tolist())
-
-            # Tripod score
-            tripod_scores.append(_compute_tripod_score(per_leg_binary))
+            _record_frame(obs, positions, joint_angle_frames,
+                          contact_binary_frames, contact_force_frames,
+                          end_effector_frames, tripod_scores)
+            _save_scene_checkpoint(
+                output_path, scene_name, step + 1, body_steps,
+                positions, joint_angle_frames, contact_binary_frames,
+                contact_force_frames, end_effector_frames, tripod_scores,
+                list(fly_obj.actuated_joints) if hasattr(fly_obj, "actuated_joints") else [],
+                "running",
+            )
 
         if terminated or truncated:
             print("  Episode ended at step %d" % step)
@@ -460,8 +500,7 @@ def run_scene(
 
     # Save to logs
     out_file = output_path / ("timeseries_%s.json" % scene_name)
-    with open(out_file, "w") as f:
-        json.dump(unity_ts, f)
+    _write_json_atomic(out_file, unity_ts)
     size_mb = out_file.stat().st_size / (1024 * 1024)
     print("\n  Saved: %s (%d frames, %.1f MB)" % (out_file, n_frames, size_mb))
 
@@ -578,8 +617,7 @@ def main():
         "files": {k: v for k, v in results.items() if v is not None},
     }
     manifest_file = output_path / "manifest.json"
-    with open(manifest_file, "w") as f:
-        json.dump(manifest, f, indent=2)
+    _write_json_atomic(manifest_file, manifest)
     print("\nManifest: %s" % manifest_file)
 
 

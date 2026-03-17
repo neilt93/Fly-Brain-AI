@@ -20,6 +20,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+
+def _write_json_atomic(path: Path, payload: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
 from bridge.config import BridgeConfig
 from bridge.interfaces import LocomotionCommand, BodyObservation, BrainOutput
 from bridge.sensory_encoder import SensoryEncoder
@@ -516,7 +524,6 @@ def main():
 
     # Save results
     output_dir = Path("logs/vnc_lite_validation")
-    output_dir.mkdir(parents=True, exist_ok=True)
     summary = {
         "passed": total_passed,
         "total": total_tests,
@@ -524,8 +531,7 @@ def main():
         "fake_brain": args.fake_brain,
         "seed": args.seed,
     }
-    with open(output_dir / "summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
+    _write_json_atomic(output_dir / "summary.json", summary)
     print(f"\nSaved to {output_dir}/summary.json")
 
 

@@ -57,6 +57,97 @@ from structlog.structured_log import (
 )
 
 
+def _write_json_atomic(path: Path, payload: dict, **kwargs):
+    """Write checkpoints atomically so partial writes do not corrupt recoverable data."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, **kwargs)
+    tmp_path.replace(path)
+
+
+def _record_episode_frame(
+    obs: dict,
+    joint_angles: np.ndarray,
+    positions: list,
+    contacts: list,
+    contact_forces_raw: list,
+    end_effectors_list: list,
+    fly_orientations: list,
+    joint_angles_log: list,
+):
+    pos = np.array(obs["fly"][0])
+    positions.append(pos)
+
+    if "contact_forces" in obs:
+        cf = np.array(obs["contact_forces"])
+        magnitudes = np.linalg.norm(cf, axis=1)
+        per_leg = np.array([
+            float(magnitudes[i * 5:(i + 1) * 5].max() > 0.01)
+            for i in range(6)
+        ])
+        contacts.append(per_leg)
+        per_leg_force = np.array([
+            float(magnitudes[i * 5:(i + 1) * 5].max())
+            for i in range(6)
+        ])
+        contact_forces_raw.append(per_leg_force)
+    else:
+        contacts.append(np.zeros(6))
+        contact_forces_raw.append(np.zeros(6))
+
+    if "end_effectors" in obs:
+        end_effectors_list.append(np.array(obs["end_effectors"]))
+    else:
+        end_effectors_list.append(np.zeros((6, 3)))
+
+    if "fly_orientation" in obs:
+        fly_orientations.append(np.array(obs["fly_orientation"]))
+    else:
+        fly_orientations.append(np.zeros(3))
+
+    joint_angles_log.append(joint_angles.tolist())
+    return pos
+
+
+def _save_episode_checkpoint(
+    output_dir: Path,
+    label: str,
+    steps_completed: int,
+    total_steps: int,
+    positions: list,
+    contacts: list,
+    contact_forces_raw: list,
+    end_effectors_list: list,
+    fly_orientations: list,
+    weight_drifts: list,
+    joint_angles_log: list,
+    joint_names: list[str],
+    perturbation_idx,
+    recovery_idx,
+    status: str,
+):
+    checkpoint = {
+        "label": label,
+        "summary": {
+            "steps_completed": steps_completed,
+            "total_steps": total_steps,
+            "status": status,
+        },
+        "positions": [np.asarray(p).tolist() for p in positions],
+        "contacts": [np.asarray(c).tolist() for c in contacts],
+        "contact_forces_raw": [np.asarray(c).tolist() for c in contact_forces_raw],
+        "end_effectors": [np.asarray(e).tolist() for e in end_effectors_list],
+        "fly_orientations": [np.asarray(o).tolist() for o in fly_orientations],
+        "weight_drifts": [float(w) for w in weight_drifts],
+        "joint_angles": [list(j) for j in joint_angles_log],
+        "joint_names": joint_names,
+        "perturbation_idx": perturbation_idx,
+        "recovery_idx": recovery_idx,
+    }
+    _write_json_atomic(output_dir / "checkpoints" / f"{label}.json", checkpoint)
+
+
 @dataclass
 class ExperimentConfig:
     """Experiment configuration."""
@@ -202,6 +293,10 @@ def run_continuous_episode(
     events_path = str(Path(config.output_dir) / "logs" / "events.jsonl")
     entered_blocks = False
     exited_blocks = False
+    perturbation_idx = None
+    recovery_idx = None
+    last_completed_step = -1
+    last_logged_step = -1
 
     for step in range(config.total_steps):
         joint_angles = controller.get_action(obs, config.timestep)
@@ -218,45 +313,21 @@ def run_continuous_episode(
             break
 
         steps_done = step + 1
+        last_completed_step = step
 
         # Log at intervals
         if step % config.log_interval == 0:
-            pos = np.array(obs["fly"][0])
-            positions.append(pos)
-
-            if "contact_forces" in obs:
-                cf = np.array(obs["contact_forces"])
-                magnitudes = np.linalg.norm(cf, axis=1)
-                # Binary contact (existing)
-                per_leg = np.array([
-                    float(magnitudes[i * 5:(i + 1) * 5].max() > 0.01)
-                    for i in range(6)
-                ])
-                contacts.append(per_leg)
-                # Raw per-leg force magnitudes (new)
-                per_leg_force = np.array([
-                    float(magnitudes[i * 5:(i + 1) * 5].max())
-                    for i in range(6)
-                ])
-                contact_forces_raw.append(per_leg_force)
-            else:
-                contacts.append(np.zeros(6))
-                contact_forces_raw.append(np.zeros(6))
-
-            # End effector positions (new)
-            if "end_effectors" in obs:
-                end_effectors_list.append(np.array(obs["end_effectors"]))
-            else:
-                end_effectors_list.append(np.zeros((6, 3)))
-
-            # Fly orientation (new)
-            if "fly_orientation" in obs:
-                fly_orientations.append(np.array(obs["fly_orientation"]))
-            else:
-                fly_orientations.append(np.zeros(3))
-
-            # Joint angles (42 DOFs)
-            joint_angles_log.append(joint_angles.tolist())
+            pos = _record_episode_frame(
+                obs,
+                joint_angles,
+                positions,
+                contacts,
+                contact_forces_raw,
+                end_effectors_list,
+                fly_orientations,
+                joint_angles_log,
+            )
+            last_logged_step = step
 
             if hasattr(controller, "get_weight_drift"):
                 weight_drifts.append(controller.get_weight_drift())
@@ -264,6 +335,7 @@ def run_continuous_episode(
             # Emit terrain transition events
             if not entered_blocks and pos[0] >= blocks_start:
                 entered_blocks = True
+                perturbation_idx = len(positions) - 1
                 append_event(events_path, EventRecord(
                     run_id=label, timestamp=time.time(), step=step,
                     event_type="terrain_transition",
@@ -271,11 +343,30 @@ def run_continuous_episode(
                 ))
             elif entered_blocks and not exited_blocks and pos[0] >= blocks_end:
                 exited_blocks = True
+                recovery_idx = len(positions) - 1
                 append_event(events_path, EventRecord(
                     run_id=label, timestamp=time.time(), step=step,
                     event_type="terrain_transition",
                     details={"from": "blocks", "to": "flat", "x": float(pos[0])},
                 ))
+
+            _save_episode_checkpoint(
+                output_dir=Path(config.output_dir),
+                label=label,
+                steps_completed=steps_done,
+                total_steps=config.total_steps,
+                positions=positions,
+                contacts=contacts,
+                contact_forces_raw=contact_forces_raw,
+                end_effectors_list=end_effectors_list,
+                fly_orientations=fly_orientations,
+                weight_drifts=weight_drifts,
+                joint_angles_log=joint_angles_log,
+                joint_names=list(fly_obj.actuated_joints),
+                perturbation_idx=perturbation_idx,
+                recovery_idx=recovery_idx,
+                status="running",
+            )
 
         # Update dashboard state periodically
         if step % 500 == 0 and step > 0 and positions:
@@ -300,22 +391,29 @@ def run_continuous_episode(
 
     sim.close()
 
+    if steps_done > 0 and last_logged_step != last_completed_step:
+        pos = _record_episode_frame(
+            obs,
+            joint_angles,
+            positions,
+            contacts,
+            contact_forces_raw,
+            end_effectors_list,
+            fly_orientations,
+            joint_angles_log,
+        )
+        if hasattr(controller, "get_weight_drift"):
+            weight_drifts.append(controller.get_weight_drift())
+        if perturbation_idx is None and pos[0] >= blocks_start:
+            perturbation_idx = len(positions) - 1
+        if perturbation_idx is not None and recovery_idx is None and pos[0] >= blocks_end:
+            recovery_idx = len(positions) - 1
+
     positions = np.array(positions) if positions else np.zeros((1, 3))
     contacts = np.array(contacts) if contacts else np.zeros((1, 6))
     contact_forces_raw = np.array(contact_forces_raw) if contact_forces_raw else np.zeros((1, 6))
     end_effectors_arr = np.array(end_effectors_list) if end_effectors_list else np.zeros((1, 6, 3))
     fly_orientations = np.array(fly_orientations) if fly_orientations else np.zeros((1, 3))
-
-    # Detect phase transitions from x-position
-    perturbation_idx = None
-    recovery_idx = None
-    for i, pos in enumerate(positions):
-        if perturbation_idx is None and pos[0] >= blocks_start:
-            perturbation_idx = i
-        if (perturbation_idx is not None
-                and recovery_idx is None
-                and pos[0] >= blocks_end):
-            recovery_idx = i
 
     print(f"  [{label}] {steps_done} steps, "
           f"x_final={positions[-1, 0]:.2f}mm, "
@@ -323,6 +421,23 @@ def run_continuous_episode(
           f"recover@idx={recovery_idx}")
 
     joint_angles_arr = np.array(joint_angles_log) if joint_angles_log else np.zeros((1, 42))
+    _save_episode_checkpoint(
+        output_dir=Path(config.output_dir),
+        label=label,
+        steps_completed=steps_done,
+        total_steps=config.total_steps,
+        positions=positions.tolist(),
+        contacts=contacts.tolist(),
+        contact_forces_raw=contact_forces_raw.tolist(),
+        end_effectors_list=end_effectors_arr.tolist(),
+        fly_orientations=fly_orientations.tolist(),
+        weight_drifts=weight_drifts,
+        joint_angles_log=joint_angles_arr.tolist(),
+        joint_names=list(fly_obj.actuated_joints),
+        perturbation_idx=perturbation_idx,
+        recovery_idx=recovery_idx,
+        status="completed" if steps_done >= config.total_steps else "partial",
+    )
 
     return {
         "positions": positions,
@@ -380,8 +495,7 @@ def run_experiment(config: Optional[ExperimentConfig] = None):
     output_dir = Path(config.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(output_dir / "config.json", "w") as f:
-        json.dump(asdict(config), f, indent=2)
+    _write_json_atomic(output_dir / "config.json", asdict(config))
 
     print("=" * 60)
     print("TERRAIN SHIFT EXPERIMENT (continuous)")
@@ -596,8 +710,7 @@ def run_experiment(config: Optional[ExperimentConfig] = None):
     print(f"\nPlots saved to: {output_dir}")
 
     # Save results JSON
-    with open(output_dir / "results.json", "w") as f:
-        json.dump(results, f, indent=2, default=str)
+    _write_json_atomic(output_dir / "results.json", results, default=str)
 
     # --- Structured logging ---
     runs_path = str(output_dir / "logs" / "runs.jsonl")

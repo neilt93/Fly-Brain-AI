@@ -15,90 +15,155 @@ public class SceneSetup : MonoBehaviour
     void Start()
     {
         SetupLighting();
-        SetupGround();
+        SetupEnvironment();
 
         if (connectomeDemo)
             SetupConnectomeDemo();
         else
             SetupComparisonMode();
 
-        SetupCamera();
+        Camera cam = SetupCamera();
 
-        // Dark background
-        Camera.main.backgroundColor = new Color(0.02f, 0.02f, 0.06f);
-        Camera.main.clearFlags = CameraClearFlags.SolidColor;
+        // Sky background
+        if (cam != null)
+        {
+            cam.backgroundColor = new Color(0.53f, 0.75f, 0.92f);
+            cam.clearFlags = CameraClearFlags.SolidColor;
+        }
     }
 
     void SetupLighting()
     {
-        var lightObj = new GameObject("MainLight");
-        var light = lightObj.AddComponent<Light>();
-        light.type = LightType.Directional;
-        light.color = new Color(0.9f, 0.85f, 0.8f);
-        light.intensity = 1.2f;
-        light.shadows = LightShadows.Soft;
-        lightObj.transform.rotation = Quaternion.Euler(45, -30, 0);
+        // Sun — warm directional from upper-left
+        var sunObj = new GameObject("Sun");
+        var sun = sunObj.AddComponent<Light>();
+        sun.type = LightType.Directional;
+        sun.color = new Color(1f, 0.95f, 0.84f);
+        sun.intensity = 1.4f;
+        sun.shadows = LightShadows.Soft;
+        sun.shadowStrength = 0.5f;
+        sunObj.transform.rotation = Quaternion.Euler(50, -40, 0);
 
+        // Fill — cool sky light from opposite side
         var fillObj = new GameObject("FillLight");
         var fill = fillObj.AddComponent<Light>();
         fill.type = LightType.Directional;
-        fill.color = new Color(0.3f, 0.4f, 0.7f);
-        fill.intensity = 0.4f;
-        fillObj.transform.rotation = Quaternion.Euler(30, 150, 0);
+        fill.color = new Color(0.55f, 0.65f, 0.85f);
+        fill.intensity = 0.5f;
+        fill.shadows = LightShadows.None;
+        fillObj.transform.rotation = Quaternion.Euler(25, 140, 0);
 
-        var rimObj = new GameObject("RimLight");
-        var rim = rimObj.AddComponent<Light>();
-        rim.type = LightType.Directional;
-        rim.color = new Color(1f, 0.5f, 0.2f);
-        rim.intensity = 0.6f;
-        rimObj.transform.rotation = Quaternion.Euler(10, -120, 0);
+        // Warm ambient — outdoor feel
+        RenderSettings.ambientLight = new Color(0.22f, 0.20f, 0.16f);
 
-        RenderSettings.ambientLight = new Color(0.05f, 0.05f, 0.1f);
+        // Distance fog
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = new Color(0.6f, 0.72f, 0.82f);
+        RenderSettings.fogStartDistance = 8f;
+        RenderSettings.fogEndDistance = 35f;
     }
 
-    void SetupGround()
+    void SetupEnvironment()
     {
+        var envParent = new GameObject("Environment");
+        var rng = new System.Random(42);
+
+        // --- Main ground plane at Y=0 ---
         var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.name = "Ground";
-        ground.transform.position = new Vector3(0f, -0.8f, 2f);
-        ground.transform.localScale = new Vector3(3f, 1f, 10f);
+        ground.transform.SetParent(envParent.transform);
+        ground.transform.position = new Vector3(0f, 0f, 0f);
+        ground.transform.localScale = new Vector3(6f, 1f, 6f); // 60x60 units
 
-        var mat = new Material(Shader.Find("Standard"));
-        mat.color = new Color(0.08f, 0.08f, 0.12f);
-        mat.SetFloat("_Metallic", 0.3f);
-        mat.SetFloat("_Glossiness", 0.7f);
-        ground.GetComponent<Renderer>().material = mat;
+        var groundMat = new Material(Shader.Find("Standard"));
+        groundMat.color = new Color(0.38f, 0.30f, 0.20f); // earthy brown
+        groundMat.SetFloat("_Metallic", 0f);
+        groundMat.SetFloat("_Glossiness", 0.08f);
+        ground.GetComponent<Renderer>().material = groundMat;
 
-        // Grid lines
-        for (int i = 0; i < 40; i++)
+        // --- Pebbles scattered on ground ---
+        for (int i = 0; i < 30; i++)
         {
-            var line = new GameObject($"GridLine_{i}");
-            line.transform.SetParent(ground.transform);
-            var lr = line.AddComponent<LineRenderer>();
-            lr.positionCount = 2;
-            lr.startWidth = 0.005f;
-            lr.endWidth = 0.005f;
-            lr.material = new Material(Shader.Find("Sprites/Default"));
-            lr.startColor = new Color(0.15f, 0.15f, 0.25f, 0.3f);
-            lr.endColor = new Color(0.15f, 0.15f, 0.25f, 0.3f);
+            var pebble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            pebble.name = $"Pebble_{i}";
+            pebble.transform.SetParent(envParent.transform);
+            Object.Destroy(pebble.GetComponent<Collider>());
 
-            float z = i * 0.5f - 5f;
-            lr.SetPosition(0, new Vector3(-3f, -0.78f, z));
-            lr.SetPosition(1, new Vector3(6f, -0.78f, z));
+            float x = (float)(rng.NextDouble() * 8 - 4);
+            float z = (float)(rng.NextDouble() * 8 - 4);
+            float size = 0.02f + (float)(rng.NextDouble() * 0.07f);
+            float ySquash = 0.3f + (float)(rng.NextDouble() * 0.4f);
+
+            pebble.transform.position = new Vector3(x, size * ySquash * 0.4f, z);
+            pebble.transform.localScale = new Vector3(size, size * ySquash, size);
+            pebble.transform.rotation = Quaternion.Euler(
+                (float)(rng.NextDouble() * 30 - 15),
+                (float)(rng.NextDouble() * 360),
+                (float)(rng.NextDouble() * 30 - 15));
+
+            var mat = new Material(Shader.Find("Standard"));
+            float shade = 0.22f + (float)(rng.NextDouble() * 0.18f);
+            mat.color = new Color(shade, shade * 0.88f, shade * 0.72f);
+            mat.SetFloat("_Metallic", 0f);
+            mat.SetFloat("_Glossiness", 0.15f + (float)(rng.NextDouble() * 0.2f));
+            pebble.GetComponent<Renderer>().material = mat;
         }
 
-        // Terrain transition marker
-        var marker = new GameObject("BlocksMarker");
-        var mlr = marker.AddComponent<LineRenderer>();
-        mlr.positionCount = 2;
-        mlr.startWidth = 0.02f;
-        mlr.endWidth = 0.02f;
-        mlr.material = new Material(Shader.Find("Sprites/Default"));
-        mlr.startColor = new Color(1f, 0.3f, 0.1f, 0.6f);
-        mlr.endColor = new Color(1f, 0.3f, 0.1f, 0.6f);
-        float blocksZ = 3f;
-        mlr.SetPosition(0, new Vector3(-3f, -0.75f, blocksZ));
-        mlr.SetPosition(1, new Vector3(6f, -0.75f, blocksZ));
+        // --- Grass blades (tall thin cubes around the perimeter) ---
+        for (int i = 0; i < 18; i++)
+        {
+            float angle = i * Mathf.PI * 2f / 18f + (float)(rng.NextDouble() * 0.3f);
+            float dist = 3.5f + (float)(rng.NextDouble() * 5f);
+            float x = Mathf.Cos(angle) * dist;
+            float z = Mathf.Sin(angle) * dist;
+            float height = 2f + (float)(rng.NextDouble() * 5f);
+            float width = 0.03f + (float)(rng.NextDouble() * 0.03f);
+            float depth = 0.008f + (float)(rng.NextDouble() * 0.008f);
+
+            var blade = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blade.name = $"Grass_{i}";
+            blade.transform.SetParent(envParent.transform);
+            Object.Destroy(blade.GetComponent<Collider>());
+
+            blade.transform.position = new Vector3(x, height * 0.5f, z);
+            blade.transform.localScale = new Vector3(width, height, depth);
+            // Slight lean outward + random twist
+            Vector3 outDir = new Vector3(x, 0, z).normalized;
+            float lean = 5f + (float)(rng.NextDouble() * 12f);
+            blade.transform.rotation = Quaternion.LookRotation(outDir) *
+                Quaternion.Euler(-lean, (float)(rng.NextDouble() * 20 - 10), 0);
+
+            var mat = new Material(Shader.Find("Standard"));
+            float g = 0.30f + (float)(rng.NextDouble() * 0.18f);
+            mat.color = new Color(g * 0.45f, g, g * 0.25f);
+            mat.SetFloat("_Metallic", 0f);
+            mat.SetFloat("_Glossiness", 0.05f);
+            blade.GetComponent<Renderer>().material = mat;
+        }
+
+        // --- A few small mounds for terrain variation ---
+        for (int i = 0; i < 5; i++)
+        {
+            var mound = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            mound.name = $"Mound_{i}";
+            mound.transform.SetParent(envParent.transform);
+            Object.Destroy(mound.GetComponent<Collider>());
+
+            float x = (float)(rng.NextDouble() * 6 - 3);
+            float z = (float)(rng.NextDouble() * 6 - 3);
+            float size = 0.15f + (float)(rng.NextDouble() * 0.25f);
+
+            mound.transform.position = new Vector3(x, size * 0.15f, z);
+            mound.transform.localScale = new Vector3(size, size * 0.3f, size);
+
+            var mat = new Material(Shader.Find("Standard"));
+            float shade = 0.32f + (float)(rng.NextDouble() * 0.1f);
+            mat.color = new Color(shade, shade * 0.85f, shade * 0.65f);
+            mat.SetFloat("_Metallic", 0f);
+            mat.SetFloat("_Glossiness", 0.06f);
+            mound.GetComponent<Renderer>().material = mat;
+        }
     }
 
     void SetupConnectomeDemo()
@@ -126,13 +191,13 @@ public class SceneSetup : MonoBehaviour
         anim.fixedFly = null;  // no fixed fly in connectome demo
         anim.connectomeViz = connectomeViz;
         anim.connectomeDemo = true;
-        anim.playbackSpeed = 0.1f;
+        anim.playbackSpeed = 0.5f;
 
         // Labels
-        CreateWorldLabel("WHOLE-BRAIN EMULATION", new Vector3(0, 3.8f, -0.5f),
-            new Color(0.6f, 0.8f, 1f));
-        CreateWorldLabel("139,000 neurons | FlyWire Connectome", new Vector3(0, 3.5f, -0.5f),
-            new Color(0.4f, 0.5f, 0.6f), fontSize: 30);
+        CreateWorldLabel("WHOLE-BRAIN EMULATION", new Vector3(0, 2.8f, -0.5f),
+            new Color(0.15f, 0.25f, 0.45f));
+        CreateWorldLabel("139,000 neurons | FlyWire Connectome", new Vector3(0, 2.55f, -0.5f),
+            new Color(0.3f, 0.35f, 0.4f), fontSize: 30);
     }
 
     void SetupComparisonMode()
@@ -165,13 +230,13 @@ public class SceneSetup : MonoBehaviour
         anim.plasticFly = pFly;
         anim.fixedFly = fFly;
         anim.connectomeDemo = false;
-        anim.playbackSpeed = 0.1f;
+        anim.playbackSpeed = 0.5f;
 
         // World-space labels
-        CreateWorldLabel("PLASTIC (adapting)", new Vector3(0, 2f, -0.5f),
-            new Color(1f, 0.4f, 0.1f));
-        CreateWorldLabel("FIXED (frozen)", new Vector3(3f, 2f, -0.5f),
-            new Color(0.5f, 0.5f, 0.7f));
+        CreateWorldLabel("PLASTIC (adapting)", new Vector3(0, 1.5f, -0.5f),
+            new Color(0.7f, 0.25f, 0.05f));
+        CreateWorldLabel("FIXED (frozen)", new Vector3(3f, 1.5f, -0.5f),
+            new Color(0.3f, 0.3f, 0.5f));
     }
 
     void CreateWorldLabel(string text, Vector3 position, Color color, int fontSize = 40)
@@ -191,26 +256,33 @@ public class SceneSetup : MonoBehaviour
         obj.AddComponent<Billboard>();
     }
 
-    void SetupCamera()
+    Camera SetupCamera()
     {
         var cam = Camera.main;
+        if (cam == null)
+            cam = FindFirstObjectByType<Camera>();
         if (cam == null)
         {
             var camObj = new GameObject("MainCamera");
             cam = camObj.AddComponent<Camera>();
+            camObj.tag = "MainCamera";
         }
+        else if (!cam.CompareTag("MainCamera"))
+            cam.tag = "MainCamera";
 
-        // Focus point
+        // Focus point (adjusted for globalScale=0.5 position scaling)
         var focusObj = new GameObject("CameraFocus");
         if (connectomeDemo)
-            focusObj.transform.position = new Vector3(0, 1.5f, 0);
+            focusObj.transform.position = new Vector3(0, 1.2f, 0);
         else
-            focusObj.transform.position = new Vector3(1.5f, 0.5f, 0);
+            focusObj.transform.position = new Vector3(1.5f, 0.4f, 0);
 
         // Interactive orbit camera
         var orbit = cam.gameObject.AddComponent<OrbitCamera>();
         orbit.target = focusObj.transform;
-        orbit.distance = connectomeDemo ? 5f : 4f;
+        orbit.distance = connectomeDemo ? 4f : 3.5f;
+
+        return cam;
     }
 }
 

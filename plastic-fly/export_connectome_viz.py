@@ -21,6 +21,21 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from time import time
+import tempfile
+
+
+def _write_json_atomic(path, obj):
+    """Write JSON to *path* atomically via a temp file + rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(obj, f)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 # Add brain-model to path
 BRAIN_MODEL_DIR = Path(__file__).resolve().parent.parent / "brain-model"
@@ -94,20 +109,27 @@ def select_viz_neurons(spike_trains, exc_indices, n_neurons=250):
     # Sort by activity
     sorted_neurons = sorted(rates.items(), key=lambda x: -x[1])
 
-    # Always include stimulated neurons that fired
-    selected = set()
+    # Always include stimulated neurons first, even if they were silent.
+    selected = []
+    selected_set = set()
     stim_set = set(exc_indices)
     for idx in exc_indices:
-        if idx in rates:
-            selected.add(idx)
+        if len(selected) >= n_neurons:
+            break
+        if idx in selected_set:
+            continue
+        selected.append(idx)
+        selected_set.add(idx)
 
     # Fill remaining slots with most active non-stimulated neurons
     for idx, rate in sorted_neurons:
         if len(selected) >= n_neurons:
             break
-        selected.add(idx)
+        if idx in selected_set:
+            continue
+        selected.append(idx)
+        selected_set.add(idx)
 
-    selected = list(selected)
     print(f"  Selected {len(selected)} neurons for visualization "
           f"({sum(1 for s in selected if s in stim_set)} stimulated)")
 
@@ -314,16 +336,18 @@ def tile_to_frames(binned_rates, target_frames):
     """Tile/loop the brain data to match the walking animation frame count."""
     n_bins = binned_rates.shape[0]
 
+    if target_frames <= 0 or n_bins == 0:
+        return np.zeros((max(target_frames, 0), binned_rates.shape[1]), dtype=np.float32)
+
     if target_frames <= n_bins:
         return binned_rates[:target_frames]
 
-    # Tile with smooth looping
+    # Tile with fractional indexing so loop points interpolate smoothly.
     result = np.zeros((target_frames, binned_rates.shape[1]), dtype=np.float32)
     for f in range(target_frames):
-        # Smooth cycling through brain data
-        phase = (f / target_frames) * n_bins * (target_frames / n_bins)
-        b = int(phase) % n_bins
-        frac = phase - int(phase)
+        phase = (f * n_bins) / float(target_frames)
+        b = int(np.floor(phase)) % n_bins
+        frac = phase - np.floor(phase)
         b_next = (b + 1) % n_bins
         result[f] = binned_rates[b] * (1 - frac) + binned_rates[b_next] * frac
 
@@ -364,10 +388,7 @@ def export_json(output_path, positions, connections, neuron_types, neuron_names,
     }
 
     output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_path, 'w') as f:
-        json.dump(data, f)
+    _write_json_atomic(output_path, data)
 
     size_mb = output_path.stat().st_size / (1024 * 1024)
     print(f"  Exported {output_path} ({size_mb:.1f} MB)")

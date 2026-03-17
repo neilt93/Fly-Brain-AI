@@ -15,8 +15,24 @@ import sys
 import json
 import time
 import argparse
+import os
+import tempfile
 import numpy as np
 from pathlib import Path
+
+
+def _write_json_atomic(path, obj):
+    """Write JSON to *path* atomically via a temp file + rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(obj, f)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -204,10 +220,8 @@ def run_and_export(body_steps=10000, warmup_steps=3000, use_fake_brain=False, se
         "perturbation_idx": 0,
     }
 
-    UNITY_RESOURCES.mkdir(parents=True, exist_ok=True)
     out_path = UNITY_RESOURCES / "timeseries_plastic.json"
-    with open(out_path, "w") as f:
-        json.dump(ts, f)
+    _write_json_atomic(out_path, ts)
     size_mb = out_path.stat().st_size / (1024 * 1024)
     print(f"\nExported {out_path} ({n_frames} frames, {size_mb:.1f} MB)")
 
@@ -217,8 +231,7 @@ def run_and_export(body_steps=10000, warmup_steps=3000, use_fake_brain=False, se
     ts_fixed["controller"] = "fixed_baseline"
     ts_fixed["weight_drifts"] = [0.0] * n_frames
     fixed_path = UNITY_RESOURCES / "timeseries_fixed.json"
-    with open(fixed_path, "w") as f:
-        json.dump(ts_fixed, f)
+    _write_json_atomic(fixed_path, ts_fixed)
     print(f"Exported {fixed_path} (clone for comparison mode)")
 
     return n_frames

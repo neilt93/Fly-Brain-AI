@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Mouse-controlled orbit camera using legacy Input API for maximum compatibility.
-/// Left-drag or Right-drag: orbit. Scroll: zoom. Middle-drag: pan. F: recenter.
+/// Mouse + keyboard orbit camera using legacy Input API for maximum compatibility.
+/// Mouse: Left/Right-drag orbit, Scroll zoom, Middle-drag pan.
+/// Keyboard: WASD move, QE up/down, Shift fast, F recenter.
 /// </summary>
 public class OrbitCamera : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class OrbitCamera : MonoBehaviour
     public float orbitSpeed = 3f;
     public float zoomSpeed = 0.5f;
     public float panSpeed = 0.01f;
+    public float moveSpeed = 3f;
     public float minDistance = 0.5f;
     public float maxDistance = 20f;
 
@@ -42,6 +44,21 @@ public class OrbitCamera : MonoBehaviour
         float scroll = Input.mouseScrollDelta.y;
         if (scroll != 0f)
             distance = Mathf.Clamp(distance - scroll * zoomSpeed, minDistance, maxDistance);
+
+        // WASD + QE keyboard movement
+        float speed = moveSpeed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            speed *= 3f;
+
+        Vector3 flatFwd = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        Vector3 flatRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+
+        if (Input.GetKey(KeyCode.W)) focusOffset += flatFwd * speed;
+        if (Input.GetKey(KeyCode.S)) focusOffset -= flatFwd * speed;
+        if (Input.GetKey(KeyCode.A)) focusOffset -= flatRight * speed;
+        if (Input.GetKey(KeyCode.D)) focusOffset += flatRight * speed;
+        if (Input.GetKey(KeyCode.E)) focusOffset += Vector3.up * speed;
+        if (Input.GetKey(KeyCode.Q)) focusOffset -= Vector3.up * speed;
 
         // F key: recenter
         if (Input.GetKeyDown(KeyCode.F))

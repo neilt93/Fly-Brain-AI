@@ -36,6 +36,35 @@ from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
 
 
+def _write_json_atomic(path: Path, payload: dict):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
+
+def _record_frame(obs, positions, odor_readings):
+    pos = np.array(obs["fly"][0])
+    positions.append(pos.tolist())
+    if "odor_intensity" in obs:
+        odor_readings.append(obs["odor_intensity"].tolist())
+
+
+def _save_checkpoint(output_path, config_payload, steps_completed, body_steps,
+                     positions, odor_readings, episode_log, status):
+    _write_json_atomic(output_path / "chemotaxis_checkpoint.json", {
+        "status": status,
+        "steps_completed": steps_completed,
+        "body_steps": body_steps,
+        "config": config_payload,
+        "positions": positions,
+        "odor_readings": odor_readings,
+        "episode_log": episode_log,
+    })
+
+
 def run_chemotaxis(
     body_steps: int = 5000,
     warmup_steps: int = 500,
@@ -142,6 +171,15 @@ def run_chemotaxis(
     brain_steps = 0
     current_cmd = LocomotionCommand(forward_drive=1.0)
     step = 0
+    config_payload = {
+        "body_steps": body_steps,
+        "odor_source": list(odor_source),
+        "odor_intensity": odor_intensity,
+        "enable_vision": enable_vision,
+        "use_fake_brain": use_fake_brain,
+        "n_sensory": len(sensory_ids),
+        "n_readout": len(readout_ids),
+    }
 
     t_start = time.time()
 
@@ -191,10 +229,9 @@ def run_chemotaxis(
             break
 
         if step % 50 == 0:
-            pos = np.array(obs["fly"][0])
-            positions.append(pos.tolist())
-            if "odor_intensity" in obs:
-                odor_readings.append(obs["odor_intensity"].tolist())
+            _record_frame(obs, positions, odor_readings)
+            _save_checkpoint(output_path, config_payload, step, body_steps,
+                             positions, odor_readings, episode_log, "running")
 
         if terminated or truncated:
             print("  Episode ended at step %d" % step)
@@ -270,21 +307,12 @@ def run_chemotaxis(
 
     # --- Save ---
     results = {
-        "config": {
-            "body_steps": body_steps,
-            "odor_source": list(odor_source),
-            "odor_intensity": odor_intensity,
-            "enable_vision": enable_vision,
-            "use_fake_brain": use_fake_brain,
-            "n_sensory": len(sensory_ids),
-            "n_readout": len(readout_ids),
-        },
+        "config": config_payload,
         "positions": positions,
         "odor_readings": odor_readings,
         "episode_log": episode_log,
     }
-    with open(output_path / "chemotaxis_results.json", "w") as f:
-        json.dump(results, f, indent=2)
+    _write_json_atomic(output_path / "chemotaxis_results.json", results)
     print("\nSaved to %s/chemotaxis_results.json" % output_path)
 
     return results

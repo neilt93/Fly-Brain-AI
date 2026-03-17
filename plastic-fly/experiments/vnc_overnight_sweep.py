@@ -15,7 +15,16 @@ from bridge.vnc_connectome import VNCInput
 
 RESULTS_PATH = Path(__file__).resolve().parent.parent / "logs" / "vnc_oscillation_sweep.json"
 
-with open('data/mn_joint_mapping.json') as f:
+
+def _write_json_atomic(path: Path, payload, **kwargs):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, **kwargs)
+    tmp_path.replace(path)
+
+with open(Path(__file__).resolve().parent.parent / "data" / "mn_joint_mapping.json") as f:
     mn_map = json.load(f)
 
 LEG_ORDER = ['LF','LM','LH','RF','RM','RH']
@@ -133,8 +142,7 @@ for inh_scale in [1.5, 3.0, 5.0, 8.0]:
                 results.append(r)
 
                 # Checkpoint after every config
-                with open(RESULTS_PATH, 'w') as f:
-                    json.dump(results, f, indent=2)
+                _write_json_atomic(RESULTS_PATH, results)
 
                 print(f'inh={inh_scale:.1f} ton={I_tonic:.1f} b={b_adapt:.1f}: '
                       f'fe={mean_fe_corr:+.3f} {alt_tag} '

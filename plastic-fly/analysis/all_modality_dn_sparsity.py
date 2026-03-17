@@ -24,6 +24,16 @@ from collections import defaultdict
 import time
 from pathlib import Path
 
+
+def _write_json_atomic(path, obj, **kwargs):
+    """Write JSON atomically: write to tmp file then rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(obj, f, **kwargs)
+    tmp.replace(path)
+
 # ── Paths ────────────────────────────────────────────────────────────────────
 BASE = str(Path(__file__).resolve().parent.parent.parent)  # up to "Connectome Fly Brain"
 CHANNEL_MAP   = f"{BASE}/plastic-fly/data/channel_map_v4_looming.json"
@@ -352,8 +362,7 @@ output = {
     "threshold": "10% of max weighted drive",
     "modalities": results,
 }
-with open(output_path, "w") as f:
-    json.dump(output, f, indent=2)
+_write_json_atomic(output_path, output, indent=2)
 print(f"\n  Results saved to: {output_path}")
 
 print(f"\n  Total runtime: {time.time() - t0:.1f}s")

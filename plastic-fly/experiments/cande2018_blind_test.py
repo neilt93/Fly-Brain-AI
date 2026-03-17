@@ -29,6 +29,14 @@ from collections import defaultdict
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+
+def _write_json_atomic(path: Path, payload: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
 from bridge.config import BridgeConfig
 from bridge.interfaces import LocomotionCommand, BodyObservation, BrainOutput
 from bridge.sensory_encoder import SensoryEncoder
@@ -572,7 +580,6 @@ def main():
 
     # Save
     output_dir = Path("logs/cande2018_blind_test")
-    output_dir.mkdir(parents=True, exist_ok=True)
     summary = {
         "annotation_results": annotation_results,
         "best_version": best_version,
@@ -580,8 +587,7 @@ def main():
         "group_predictions": group_predictions,
         "elapsed_s": elapsed,
     }
-    with open(output_dir / "results.json", "w") as f:
-        json.dump(summary, f, indent=2)
+    _write_json_atomic(output_dir / "results.json", summary)
     print(f"Saved to {output_dir}/results.json")
 
 

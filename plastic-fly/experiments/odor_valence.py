@@ -42,6 +42,36 @@ from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
 
 
+def _write_json_atomic(path: Path, payload: dict):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
+
+def _save_trial_checkpoint(
+    checkpoint_dir: Path,
+    label: str,
+    steps_completed: int,
+    body_steps: int,
+    episode_log: list,
+    status: str,
+):
+    """Write incremental checkpoint for a single valence trial."""
+    checkpoint = {
+        "label": label,
+        "summary": {
+            "steps_completed": steps_completed,
+            "body_steps": body_steps,
+            "status": status,
+        },
+        "episode_log": episode_log,
+    }
+    _write_json_atomic(checkpoint_dir / f"{label}.json", checkpoint)
+
+
 def load_orn_ids(glomerulus: str, brain_repo: Path) -> dict:
     """Load left/right ORN neuron IDs for a glomerulus from FlyWire annotations.
 
@@ -93,6 +123,7 @@ def run_valence_trial(
     shuffle_seed: int | None = None,
     decoder_path: str | Path | None = None,
     rate_scale: float | None = None,
+    checkpoint_dir: Path | None = None,
 ) -> dict:
     """Run a single trial with specified odor asymmetry.
 
@@ -184,6 +215,12 @@ def run_valence_trial(
                 "readout_active": active,
             })
 
+            if checkpoint_dir is not None and brain_steps % 10 == 0:
+                _save_trial_checkpoint(
+                    checkpoint_dir, label, step + 1, body_steps,
+                    episode_log, status="running",
+                )
+
         action = locomotion.step(current_cmd)
         try:
             obs, _, terminated, truncated, info = sim.step(action)
@@ -238,6 +275,7 @@ def _run_condition_set(
     shuffle_seed: int | None = None,
     decoder_path: str | Path | None = None,
     rate_scale: float | None = None,
+    checkpoint_dir: Path | None = None,
 ) -> dict:
     """Run a set of conditions across seeds, returning {cond_name: [results]}."""
     tag = "SHUFFLED" if shuffle_seed is not None else "REAL"
@@ -265,6 +303,7 @@ def _run_condition_set(
                 shuffle_seed=shuffle_seed,
                 decoder_path=decoder_path,
                 rate_scale=rate_scale,
+                checkpoint_dir=checkpoint_dir,
             )
             cond_results.append(result)
         all_results[cond_name] = cond_results
@@ -372,6 +411,7 @@ def run_odor_valence(
         conditions, readout_ids, body_steps, warmup_steps,
         use_fake_brain, seeds, shuffle_seed=None,
         decoder_path=decoder_path, rate_scale=rate_scale,
+        checkpoint_dir=output_path / "checkpoints",
     )
 
     # --- Shuffled connectome control ---
@@ -384,6 +424,7 @@ def run_odor_valence(
             conditions, readout_ids, body_steps, warmup_steps,
             use_fake_brain, seeds, shuffle_seed=999,
             decoder_path=decoder_path, rate_scale=rate_scale,
+            checkpoint_dir=output_path / "checkpoints",
         )
 
     # --- Analysis ---
@@ -489,8 +530,7 @@ def run_odor_valence(
         }
 
     out_file = output_path / "valence_results.json"
-    with open(out_file, "w") as f:
-        json.dump(output_data, f, indent=2)
+    _write_json_atomic(out_file, output_data)
     print("\nSaved to %s" % out_file)
 
     return output_data

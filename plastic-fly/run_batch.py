@@ -22,6 +22,14 @@ from scientist.scientist_agent import ScientistAgent
 from dashboard.generate import generate_dashboard
 
 
+def _write_json_atomic(path: Path, payload, **kwargs):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w") as f:
+        json.dump(payload, f, **kwargs)
+    tmp.replace(path)
+
+
 def _run_and_update(config: ExperimentConfig, curator: CuratorAgent, run_idx: int):
     """Run one experiment, ingest into curator, return output."""
     print(f"\n{'='*60}")
@@ -131,8 +139,7 @@ def main():
 
     # Save curator summary
     curator_data = curator.to_summary_json()
-    with open(output_dir / "curator_summary.json", "w") as f:
-        json.dump(curator_data, f, indent=2, default=str)
+    _write_json_atomic(output_dir / "curator_summary.json", curator_data, indent=2, default=str)
 
     # Scientist recommendations for next time
     runs_path = str(output_dir / "logs" / "runs.jsonl")

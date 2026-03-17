@@ -39,6 +39,15 @@ from experiments.topology_learning.vnc_policy import (
 from experiments.topology_learning.es_optimizer import OpenAIES
 
 
+def _write_json_atomic(path: Path, payload, **kwargs):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, **kwargs)
+    tmp_path.replace(path)
+
+
 # Joint params from mn_decoder.py for safe output clamping
 def _load_joint_params():
     from bridge.mn_decoder import _JOINT_PARAMS
@@ -261,8 +270,7 @@ def run_training(
                     "pop_size": cfg.pop_size,
                 }
                 ckpt_path = checkpoint_dir / f"{arch_name}_s{seed}_ckpt.json"
-                with open(ckpt_path, "w") as f:
-                    json.dump(ckpt, f, indent=2)
+                _write_json_atomic(ckpt_path, ckpt)
                 np.save(
                     checkpoint_dir / f"{arch_name}_s{seed}_theta.npy",
                     es.best_params,
@@ -356,10 +364,8 @@ def main():
             all_results.append(result)
 
             # Save incrementally
-            cfg.output_dir.mkdir(parents=True, exist_ok=True)
             out_path = cfg.output_dir / f"{arch_name}_s{seed}_curve.json"
-            with open(out_path, "w") as f:
-                json.dump(result, f, indent=2)
+            _write_json_atomic(out_path, result)
             print(f"  Saved: {out_path}")
 
     # --- Summary ---
@@ -387,19 +393,18 @@ def main():
 
     # Save full summary
     summary_path = cfg.output_dir / "summary.json"
-    with open(summary_path, "w") as f:
-        json.dump({
-            "results": all_results,
-            "config": {
-                "architectures": architectures,
-                "seeds": seed_list,
-                "n_generations": cfg.n_generations,
-                "pop_size": cfg.pop_size,
-                "episode_length": cfg.episode_length,
-                "top_k_intrinsic": cfg.top_k_intrinsic,
-            },
-            "total_time_s": total_time,
-        }, f, indent=2)
+    _write_json_atomic(summary_path, {
+        "results": all_results,
+        "config": {
+            "architectures": architectures,
+            "seeds": seed_list,
+            "n_generations": cfg.n_generations,
+            "pop_size": cfg.pop_size,
+            "episode_length": cfg.episode_length,
+            "top_k_intrinsic": cfg.top_k_intrinsic,
+        },
+        "total_time_s": total_time,
+    })
     print(f"\n  Full summary: {summary_path}")
 
 

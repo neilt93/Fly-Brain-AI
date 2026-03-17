@@ -63,8 +63,11 @@ public class FlyDataLoader : MonoBehaviour
             try
             {
                 plasticData = JsonConvert.DeserializeObject<TimeSeriesData>(plasticJson.text);
+                string dofLabel = ", no joint angles";
+                if (plasticData.joint_angles != null && plasticData.joint_angles.Count > 0)
+                    dofLabel = $", {plasticData.joint_angles[0].Count} DOFs";
                 Debug.Log($"Loaded plastic: {plasticData.n_frames} frames" +
-                    (plasticData.joint_angles != null ? $", {plasticData.joint_angles[0].Count} DOFs" : ", no joint angles"));
+                    dofLabel);
             }
             catch (System.Exception e)
             {
@@ -120,7 +123,7 @@ public class FlyDataLoader : MonoBehaviour
     /// </summary>
     public float[] GetFiringRates(int frame)
     {
-        if (connectomeData == null || connectomeData.firing_rates == null)
+        if (connectomeData == null || connectomeData.firing_rates == null || connectomeData.n_frames <= 0)
             return null;
         int idx = frame % connectomeData.n_frames;
         var rates = connectomeData.firing_rates[idx];

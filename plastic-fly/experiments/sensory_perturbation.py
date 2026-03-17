@@ -51,6 +51,54 @@ from bridge.flygym_adapter import FlyGymAdapter
 from analysis.behavior_metrics import compute_behavior, BehaviorReport
 
 
+def _write_json_atomic(path: Path, payload: dict):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, default=str)
+    tmp_path.replace(path)
+
+
+def _record_frame(obs, positions, orientations, contact_forces_log):
+    """Extract and append one frame of position, orientation, and contact data."""
+    positions.append(np.array(obs["fly"][0]))
+    orientations.append(np.array(obs["fly"][2]))
+    cf_raw = np.asarray(obs.get("contact_forces", np.zeros((30, 3))))
+    magnitudes = np.linalg.norm(cf_raw, axis=1) if cf_raw.ndim == 2 else np.zeros(30)
+    per_leg = np.array([magnitudes[i*5:(i+1)*5].max() for i in range(6)])
+    contact_forces_log.append(np.clip(per_leg / 10.0, 0.0, 1.0))
+
+
+def _save_condition_checkpoint(
+    output_path: Path,
+    condition_name: str,
+    steps_completed: int,
+    body_steps: int,
+    positions: list,
+    orientations: list,
+    contact_forces_log: list,
+    episode_log: list,
+    status: str,
+):
+    """Write incremental checkpoint for a single perturbation condition."""
+    checkpoint = {
+        "condition": condition_name,
+        "summary": {
+            "steps_completed": steps_completed,
+            "body_steps": body_steps,
+            "status": status,
+        },
+        "positions": [np.asarray(p).tolist() for p in positions],
+        "orientations": [np.asarray(o).tolist() for o in orientations],
+        "contact_forces": [np.asarray(c).tolist() for c in contact_forces_log],
+        "episode_log": episode_log,
+    }
+    _write_json_atomic(
+        output_path / "checkpoints" / f"{condition_name}.json", checkpoint
+    )
+
+
 # --- Perturbation definitions ---
 
 PERTURBATION_CONDITIONS = {
@@ -136,6 +184,7 @@ def run_single_perturbation(
     offset_frac: float = 0.75,
     sample_interval: int = 20,
     readout_version: int = 2,
+    output_path: Path | None = None,
 ) -> dict:
     """Run one perturbation condition with three-phase protocol."""
     import flygym
@@ -266,12 +315,19 @@ def run_single_perturbation(
             break
 
         if step % sample_interval == 0:
-            positions.append(np.array(obs["fly"][0]))
-            orientations.append(np.array(obs["fly"][2]))
-            cf_raw = np.asarray(obs.get("contact_forces", np.zeros((30, 3))))
-            magnitudes = np.linalg.norm(cf_raw, axis=1) if cf_raw.ndim == 2 else np.zeros(30)
-            per_leg = np.array([magnitudes[i*5:(i+1)*5].max() for i in range(6)])
-            contact_forces_log.append(np.clip(per_leg / 10.0, 0.0, 1.0))
+            _record_frame(obs, positions, orientations, contact_forces_log)
+            if output_path is not None:
+                _save_condition_checkpoint(
+                    output_path=output_path,
+                    condition_name=condition_name,
+                    steps_completed=step + 1,
+                    body_steps=body_steps,
+                    positions=positions,
+                    orientations=orientations,
+                    contact_forces_log=contact_forces_log,
+                    episode_log=episode_log,
+                    status="running",
+                )
 
         if terminated or truncated:
             break
@@ -441,6 +497,7 @@ def run_perturbation_study(
             onset_frac=onset_frac,
             offset_frac=offset_frac,
             readout_version=readout_version,
+            output_path=output_path,
         )
         if "error" in r:
             print("  ERROR: %s" % r["error"])
@@ -626,8 +683,7 @@ def run_perturbation_study(
         ]
         save_results[cond_name] = save_r
 
-    with open(output_path / "perturbation_results.json", "w") as f:
-        json.dump(save_results, f, indent=2, default=str)
+    _write_json_atomic(output_path / "perturbation_results.json", save_results)
     print("\nSaved to %s/perturbation_results.json" % output_path)
 
     return results

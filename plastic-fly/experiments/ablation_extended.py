@@ -28,9 +28,49 @@ from bridge.flygym_adapter import FlyGymAdapter
 from analysis.behavior_metrics import compute_behavior
 
 
+def _write_json_atomic(path: Path, payload: dict):
+    """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
+
+
+def _record_frame(obs, positions, orientations, contact_forces_log):
+    """Extract and append one frame of position, orientation, and contact data."""
+    positions.append(np.array(obs["fly"][0]))
+    orientations.append(np.array(obs["fly"][2]))
+    cf_raw = np.asarray(obs.get("contact_forces", np.zeros((30, 3))))
+    magnitudes = np.linalg.norm(cf_raw, axis=1) if cf_raw.ndim == 2 else np.zeros(30)
+    per_leg = np.array([magnitudes[i*5:(i+1)*5].max() for i in range(6)])
+    contact_forces_log.append(np.clip(per_leg / 10.0, 0.0, 1.0))
+
+
+def _save_trial_checkpoint(
+    output_path, label, steps_completed, body_steps,
+    positions, orientations, contact_forces_log, episode_log, status,
+):
+    """Write an incremental checkpoint for one ablation trial."""
+    checkpoint = {
+        "label": label,
+        "summary": {
+            "steps_completed": steps_completed,
+            "body_steps": body_steps,
+            "status": status,
+        },
+        "positions": [np.asarray(p).tolist() for p in positions],
+        "orientations": [np.asarray(o).tolist() for o in orientations],
+        "contact_forces": [np.asarray(c).tolist() for c in contact_forces_log],
+        "episode_log": episode_log,
+    }
+    _write_json_atomic(output_path / f"checkpoint_{label}.json", checkpoint)
+
+
 def run_trial_with_ablation(
     label, ablate_ids, body_steps, warmup_steps, use_fake_brain, seed,
     decoder_groups, sample_interval=20, readout_version=2,
+    checkpoint_dir=None,
 ):
     """Run one trial, zeroing specified neuron IDs in brain output."""
     import flygym
@@ -130,12 +170,13 @@ def run_trial_with_ablation(
             break
 
         if step % sample_interval == 0:
-            positions.append(np.array(obs["fly"][0]))
-            orientations.append(np.array(obs["fly"][2]))
-            cf_raw = np.asarray(obs.get("contact_forces", np.zeros((30, 3))))
-            magnitudes = np.linalg.norm(cf_raw, axis=1) if cf_raw.ndim == 2 else np.zeros(30)
-            per_leg = np.array([magnitudes[i*5:(i+1)*5].max() for i in range(6)])
-            contact_forces_log.append(np.clip(per_leg / 10.0, 0.0, 1.0))
+            _record_frame(obs, positions, orientations, contact_forces_log)
+            if checkpoint_dir is not None:
+                _save_trial_checkpoint(
+                    Path(checkpoint_dir), label, step + 1, body_steps,
+                    positions, orientations, contact_forces_log,
+                    episode_log, "running",
+                )
 
         if terminated or truncated:
             break
@@ -230,8 +271,7 @@ def run_dose_response(body_steps=5000, warmup_steps=500, use_fake_brain=False,
     monotonic = all(abs(dists[i]) >= abs(dists[i+1]) * 0.8 for i in range(len(dists)-1))
     print("\n  [%s] Graded response (monotonic distance drop)" % ("PASS" if monotonic else "FAIL"))
 
-    with open(output_path / "dose_response_results.json", "w") as f:
-        json.dump(results, f, indent=2, default=str)
+    _write_json_atomic(output_path / "dose_response_results.json", results)
     print("Saved to %s" % (output_path / "dose_response_results.json"))
     return results
 
@@ -352,8 +392,7 @@ def run_random_ablation_control(body_steps=5000, warmup_steps=500, use_fake_brai
     n_pass = sum(1 for t in tests if t["passed"])
     print("\n  %d/%d specificity tests passed" % (n_pass, len(tests)))
 
-    with open(output_path / "random_ablation_results.json", "w") as f:
-        json.dump(all_results, f, indent=2, default=str)
+    _write_json_atomic(output_path / "random_ablation_results.json", all_results)
     print("Saved to %s" % (output_path / "random_ablation_results.json"))
     return all_results
 

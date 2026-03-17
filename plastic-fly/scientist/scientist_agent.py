@@ -15,6 +15,16 @@ from pathlib import Path
 from typing import Optional
 from collections import defaultdict
 
+
+def _write_json_atomic(path, obj, **kwargs):
+    """Write JSON atomically: write to tmp file then rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(obj, f, **kwargs)
+    tmp.replace(path)
+
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -348,7 +358,5 @@ class ScientistAgent:
         proposals = self.recommend()
         data = [asdict(p) for p in proposals]
         path = Path(output_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, default=str)
+        _write_json_atomic(path, data, indent=2, default=str)
         return proposals

@@ -19,11 +19,27 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from time import time
+
+
+def _write_json_atomic(path, obj):
+    """Write JSON to *path* atomically via a temp file + rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(obj, f)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 BRAIN_MODEL_DIR = Path(__file__).resolve().parent.parent / "brain-model"
 sys.path.insert(0, str(BRAIN_MODEL_DIR))
@@ -400,9 +416,7 @@ def main():
     else:
         output_path = Path(__file__).resolve().parent.parent / "FlyBrainViz" / "Assets" / "Resources" / "connectome_activity.json"
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        json.dump(data, f)
+    _write_json_atomic(output_path, data)
 
     size_mb = output_path.stat().st_size / (1024 * 1024)
     print("  Exported %s (%.1f MB)" % (output_path, size_mb))

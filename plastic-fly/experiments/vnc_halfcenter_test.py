@@ -13,6 +13,14 @@ import json
 import numpy as np
 from time import time
 from collections import defaultdict
+
+
+def _write_json_atomic(path: Path, payload: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    tmp_path.replace(path)
 from bridge.vnc_minimal import MinimalVNCRunner, MinimalVNCConfig
 from bridge.vnc_connectome import VNCInput
 import pandas as pd
@@ -221,7 +229,5 @@ for r in results:
     tri = "TRI!" if r["tripod"] < -0.2 else "---"
     print(f"  {r['name']:25s}: fe={r['fe_corr']:+.3f} {alt}  tri={r['tripod']:+.3f} {tri}")
 
-LOGS.mkdir(parents=True, exist_ok=True)
-with open(LOGS / "vnc_halfcenter_results.json", "w") as f:
-    json.dump(results, f, indent=2)
+_write_json_atomic(LOGS / "vnc_halfcenter_results.json", results)
 print(f"\nSaved to {LOGS / 'vnc_halfcenter_results.json'}")

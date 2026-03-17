@@ -73,11 +73,27 @@ public class ConnectomeViz : MonoBehaviour
         nodeBaseSize = new float[nNeurons];
         nodeBaseColor = new Color[nNeurons];
 
+        // Guard: ensure positions_3d has enough entries
+        if (data.positions_3d == null || data.positions_3d.Count < nNeurons)
+        {
+            Debug.LogError($"ConnectomeViz.Build: positions_3d has {data.positions_3d?.Count ?? 0} entries, need {nNeurons}");
+            return;
+        }
+
         // Create neuron spheres
         for (int i = 0; i < nNeurons; i++)
         {
             var pos3 = data.positions_3d[i];
-            Vector3 pos = new Vector3(pos3[0], pos3[1], pos3[2]) * brainScale;
+            Vector3 pos;
+            if (pos3 == null || pos3.Count < 3)
+            {
+                Debug.LogWarning($"ConnectomeViz: position {i} has {pos3?.Count ?? 0} elements, using origin");
+                pos = Vector3.zero;
+            }
+            else
+            {
+                pos = new Vector3(pos3[0], pos3[1], pos3[2]) * brainScale;
+            }
 
             var node = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             node.name = i < data.neuron_names.Count ? data.neuron_names[i] : $"N_{i}";
@@ -120,6 +136,8 @@ public class ConnectomeViz : MonoBehaviour
             float maxW = 0f;
             for (int c = 0; c < nConnections; c++)
             {
+                if (data.connections[c] == null || data.connections[c].Count < 3)
+                    continue;
                 float w = Mathf.Abs(data.connections[c][2]);
                 if (w > maxW) maxW = w;
             }
@@ -127,8 +145,12 @@ public class ConnectomeViz : MonoBehaviour
 
             for (int c = 0; c < nConnections; c++)
             {
+                if (data.connections[c] == null || data.connections[c].Count < 3)
+                    continue;
                 int from = (int)data.connections[c][0];
                 int to = (int)data.connections[c][1];
+                if (from < 0 || from >= nNeurons || to < 0 || to >= nNeurons)
+                    continue;
                 float w = data.connections[c][2] / maxW; // normalized
 
                 connFrom[c] = from;
@@ -220,6 +242,8 @@ public class ConnectomeViz : MonoBehaviour
         // Update connections
         for (int c = 0; c < nConnections; c++)
         {
+            if (connFrom[c] < 0 || connFrom[c] >= nNeurons || connTo[c] < 0 || connTo[c] >= nNeurons)
+                continue;
             float avgAct = (currentActivity[connFrom[c]] + currentActivity[connTo[c]]) * 0.5f;
             float w = Mathf.Abs(connWeight[c]);
             float intensity = avgAct * w;

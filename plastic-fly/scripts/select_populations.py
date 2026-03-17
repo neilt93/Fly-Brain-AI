@@ -28,6 +28,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from bridge.config import BridgeConfig
 
 
+def _write_json_atomic(path, obj, **kwargs):
+    """Write JSON atomically: write to tmp file then rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(obj, f, **kwargs)
+    tmp.replace(path)
+
+
 # --- Sugar GRN IDs (well-characterized gustatory neurons) ---
 SUGAR_GRN_FLYIDS = np.array([
     720575940624963786, 720575940630233916, 720575940637568838,
@@ -267,11 +277,9 @@ def main():
     np.save(data_dir / "sensory_ids.npy", sensory_ids)
     np.save(data_dir / "readout_ids.npy", readout_ids)
 
-    with open(data_dir / "channel_map.json", "w") as f:
-        json.dump(channel_map, f, indent=2)
+    _write_json_atomic(data_dir / "channel_map.json", channel_map, indent=2)
 
-    with open(data_dir / "decoder_groups.json", "w") as f:
-        json.dump(decoder_groups, f, indent=2)
+    _write_json_atomic(data_dir / "decoder_groups.json", decoder_groups, indent=2)
 
     print("\nSaved to %s/:" % data_dir)
     print("  sensory_ids.npy:     %d FlyWire IDs" % len(sensory_ids))

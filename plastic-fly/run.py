@@ -22,6 +22,14 @@ from scientist.scientist_agent import ScientistAgent
 from dashboard.generate import generate_dashboard
 
 
+def _write_json_atomic(path: Path, payload, **kwargs):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w") as f:
+        json.dump(payload, f, **kwargs)
+    tmp.replace(path)
+
+
 def export_unity_timeseries(experiment_output, output_dir):
     """Export time-series JSON for Unity visualization with joint angles."""
     from analysis.gait_metrics import classify_stance_swing, compute_tripod_score
@@ -62,8 +70,7 @@ def export_unity_timeseries(experiment_output, output_dir):
         }
 
         out_file = output_path / f"timeseries_{ctrl_name}.json"
-        with open(out_file, "w") as f:
-            json.dump(ts, f)
+        _write_json_atomic(out_file, ts)
         print(f"Unity timeseries: {out_file} ({n_frames} frames, {len(joint_names)} DOFs)")
 
 
@@ -134,14 +141,12 @@ def main():
     # Save curator summary JSON
     curator_data = curator.to_summary_json()
     curator_summary_path = Path(args.output_dir) / "curator_summary.json"
-    with open(curator_summary_path, "w") as f:
-        json.dump(curator_data, f, indent=2, default=str)
+    _write_json_atomic(curator_summary_path, curator_data, indent=2, default=str)
 
     # Save unity candidates
     unity_candidates = curator_data.get("unity_candidates", [])
     if unity_candidates:
-        with open(Path(args.output_dir) / "unity_candidates.json", "w") as f:
-            json.dump(unity_candidates, f, indent=2, default=str)
+        _write_json_atomic(Path(args.output_dir) / "unity_candidates.json", unity_candidates, indent=2, default=str)
 
     # Scientist recommendations
     print("\n" + "=" * 60)

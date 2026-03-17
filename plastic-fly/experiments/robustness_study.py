@@ -18,6 +18,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+
+def _write_json_atomic(path: Path, payload: dict, **kwargs):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w") as f:
+        json.dump(payload, f, indent=2, **kwargs)
+    tmp_path.replace(path)
+
 from experiments.ablation_study import run_single_condition, ABLATION_CONDITIONS
 from bridge.config import BridgeConfig
 
@@ -216,8 +224,7 @@ def run_robustness_study(
         "effects": effects,
         "elapsed_s": elapsed_total,
     }
-    with open(output_path / "robustness_results.json", "w") as f:
-        json.dump(save_data, f, indent=2, default=str)
+    _write_json_atomic(output_path / "robustness_results.json", save_data, default=str)
     print("\nSaved to %s/robustness_results.json" % output_path)
 
     return save_data

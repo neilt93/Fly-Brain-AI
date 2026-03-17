@@ -27,6 +27,16 @@ from typing import Optional
 from enum import Enum
 
 
+def _write_json_atomic(path, obj, **kwargs):
+    """Write JSON atomically: write to tmp file then rename."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(obj, f, **kwargs)
+    tmp.replace(path)
+
+
 class Priority(Enum):
     """How urgently Neil should see this."""
     IGNORE = 0        # Noise, not worth mentioning
@@ -504,8 +514,7 @@ class CuratorAgent:
         """Persist events to disk."""
         events_file = self.log_dir / "events.json"
         data = [e.to_dict() for e in self.events]
-        with open(events_file, "w") as f:
-            json.dump(data, f, indent=2, default=str)
+        _write_json_atomic(events_file, data, indent=2, default=str)
 
     def load_events(self):
         """Load events from disk."""

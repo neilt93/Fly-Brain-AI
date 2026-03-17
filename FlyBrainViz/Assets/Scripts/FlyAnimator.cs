@@ -36,9 +36,6 @@ public class FlyAnimator : MonoBehaviour
     string[] plasticJointNames;
     string[] fixedJointNames;
 
-    // Camera focus tracking
-    Transform cameraFocus;
-
     // Connectome state
     bool connectomeReady = false;
 
@@ -46,6 +43,11 @@ public class FlyAnimator : MonoBehaviour
     {
         if (dataLoader == null)
             dataLoader = FindFirstObjectByType<FlyDataLoader>();
+        if (dataLoader == null)
+        {
+            Debug.LogError("FlyAnimator: no FlyDataLoader found");
+            return;
+        }
 
         if (!dataLoader.dataLoaded)
         {
@@ -53,7 +55,8 @@ public class FlyAnimator : MonoBehaviour
             return;
         }
 
-        totalFrames = dataLoader.plasticData.n_frames;
+        int fixedFrames = dataLoader.fixedData != null ? dataLoader.fixedData.n_frames : 0;
+        totalFrames = connectomeDemo ? dataLoader.plasticData.n_frames : Mathf.Max(dataLoader.plasticData.n_frames, fixedFrames);
 
         // Cache joint names
         plasticJointNames = dataLoader.GetJointNames(dataLoader.plasticData);
@@ -63,10 +66,6 @@ public class FlyAnimator : MonoBehaviour
             plasticFly.transform.position = new Vector3(0, 0, 0);
         if (fixedFly != null && !connectomeDemo)
             fixedFly.transform.position = new Vector3(3f, 0, 0);
-
-        // Find camera focus point for dynamic tracking
-        var focusObj = GameObject.Find("CameraFocus");
-        if (focusObj != null) cameraFocus = focusObj.transform;
 
         // Initialize connectome viz if data is available
         if (connectomeDemo && connectomeViz != null && dataLoader.connectomeLoaded)
@@ -113,62 +112,60 @@ public class FlyAnimator : MonoBehaviour
         UpdateHUD();
     }
 
+    int GetFrameIndex(FlyDataLoader.TimeSeriesData data)
+    {
+        if (data == null || data.n_frames <= 0)
+            return 0;
+        return loop ? currentFrame % data.n_frames : Mathf.Min(currentFrame, data.n_frames - 1);
+    }
+
     void UpdateFlies()
     {
         if (plasticFly != null && dataLoader.plasticData != null)
         {
-            Vector3 pos = dataLoader.GetPosition(dataLoader.plasticData, currentFrame);
-            plasticFly.transform.position = new Vector3(pos.x, pos.y, pos.z);
+            int plasticFrame = GetFrameIndex(dataLoader.plasticData);
+            Vector3 pos = dataLoader.GetPosition(dataLoader.plasticData, plasticFrame);
+            float s = plasticFly.globalScale;
+            plasticFly.transform.position = new Vector3(pos.x * s, pos.y * s, pos.z * s);
 
-            int[] contacts = dataLoader.GetContacts(dataLoader.plasticData, currentFrame);
+            int[] contacts = dataLoader.GetContacts(dataLoader.plasticData, plasticFrame);
             plasticFly.SetContacts(contacts);
 
             // Drive joint angles if available
-            float[] angles = dataLoader.GetJointAngles(dataLoader.plasticData, currentFrame);
+            float[] angles = dataLoader.GetJointAngles(dataLoader.plasticData, plasticFrame);
             if (angles != null && plasticJointNames != null)
                 plasticFly.SetJointAngles(angles, plasticJointNames);
 
-            float tripod = dataLoader.GetTripodScore(dataLoader.plasticData, currentFrame);
+            float tripod = dataLoader.GetTripodScore(dataLoader.plasticData, plasticFrame);
             plasticFly.SetTripodFeedback(tripod);
 
-            float drift = dataLoader.GetWeightDrift(dataLoader.plasticData, currentFrame);
+            float drift = dataLoader.GetWeightDrift(dataLoader.plasticData, plasticFrame);
             plasticFly.SetNeuralActivity(Mathf.Clamp01(drift * 20f));
         }
 
         if (!connectomeDemo && fixedFly != null && dataLoader.fixedData != null)
         {
-            Vector3 pos = dataLoader.GetPosition(dataLoader.fixedData, currentFrame);
-            fixedFly.transform.position = new Vector3(pos.x + 3f, pos.y, pos.z);
+            int fixedFrame = GetFrameIndex(dataLoader.fixedData);
+            Vector3 pos = dataLoader.GetPosition(dataLoader.fixedData, fixedFrame);
+            float sf = fixedFly.globalScale;
+            fixedFly.transform.position = new Vector3(pos.x * sf + 3f, pos.y * sf, pos.z * sf);
 
-            int[] contacts = dataLoader.GetContacts(dataLoader.fixedData, currentFrame);
+            int[] contacts = dataLoader.GetContacts(dataLoader.fixedData, fixedFrame);
             fixedFly.SetContacts(contacts);
 
-            float[] angles = dataLoader.GetJointAngles(dataLoader.fixedData, currentFrame);
+            float[] angles = dataLoader.GetJointAngles(dataLoader.fixedData, fixedFrame);
             if (angles != null && fixedJointNames != null)
                 fixedFly.SetJointAngles(angles, fixedJointNames);
 
-            float tripod = dataLoader.GetTripodScore(dataLoader.fixedData, currentFrame);
+            float tripod = dataLoader.GetTripodScore(dataLoader.fixedData, fixedFrame);
             fixedFly.SetTripodFeedback(tripod);
 
             fixedFly.SetNeuralActivity(0f);
         }
 
-        // Update camera focus
-        if (cameraFocus != null)
-        {
-            if (connectomeDemo && plasticFly != null)
-            {
-                // Focus on single fly, slightly above for brain viz
-                Vector3 flyPos = plasticFly.transform.position;
-                cameraFocus.position = new Vector3(flyPos.x, Mathf.Max(flyPos.y + 1.0f, 1.0f), flyPos.z);
-            }
-            else if (plasticFly != null && fixedFly != null)
-            {
-                Vector3 mid = (plasticFly.transform.position + fixedFly.transform.position) * 0.5f;
-                mid.y = Mathf.Max(mid.y, 0.3f);
-                cameraFocus.position = mid;
-            }
-        }
+        // Camera focus is set once in SceneSetup — no per-frame tracking.
+        // The fly's total displacement is small (~0.4 units) so a fixed focus works.
+        // User can reposition with WASD/QE.
     }
 
     void UpdateConnectome()
@@ -186,7 +183,8 @@ public class FlyAnimator : MonoBehaviour
 
         if (connectomeDemo)
         {
-            float pScore = dataLoader.GetTripodScore(dataLoader.plasticData, currentFrame);
+            int plasticFrame = GetFrameIndex(dataLoader.plasticData);
+            float pScore = dataLoader.GetTripodScore(dataLoader.plasticData, plasticFrame);
             scoreLabel = $"Tripod Score: {pScore:F2}";
 
             if (connectomeReady)
@@ -197,15 +195,22 @@ public class FlyAnimator : MonoBehaviour
         }
         else
         {
-            float pScore = dataLoader.GetTripodScore(dataLoader.plasticData, currentFrame);
-            float fScore = dataLoader.fixedData != null ? dataLoader.GetTripodScore(dataLoader.fixedData, currentFrame) : 0f;
+            int plasticFrame = GetFrameIndex(dataLoader.plasticData);
+            float pScore = dataLoader.GetTripodScore(dataLoader.plasticData, plasticFrame);
+            float fScore = 0f;
+            if (dataLoader.fixedData != null)
+            {
+                int fixedFrame = GetFrameIndex(dataLoader.fixedData);
+                fScore = dataLoader.GetTripodScore(dataLoader.fixedData, fixedFrame);
+            }
             scoreLabel = $"Tripod  Plastic: {pScore:F2}  Fixed: {fScore:F2}";
         }
 
         if (dataLoader.plasticData != null)
         {
             int pertIdx = dataLoader.plasticData.perturbation_idx ?? 0;
-            phaseLabel = currentFrame < pertIdx ? "FLAT TERRAIN" : "BLOCKS TERRAIN";
+            int plasticFrame = GetFrameIndex(dataLoader.plasticData);
+            phaseLabel = plasticFrame < pertIdx ? "FLAT TERRAIN" : "BLOCKS TERRAIN";
         }
     }
 
@@ -281,7 +286,7 @@ public class FlyAnimator : MonoBehaviour
 
         // Controls
         GUI.Label(new Rect(0, h - 18, w, 20),
-            "[Space] Play/Pause   [R] Reset   [Arrows] Speed/Step   [RMB] Orbit   [Scroll] Zoom   [MMB] Pan   [F] Recenter",
+            "[WASD] Move   [QE] Up/Down   [Space] Play/Pause   [R] Reset   [Arrows] Speed/Step   [Mouse] Orbit/Zoom/Pan   [F] Recenter",
             controlStyle);
     }
 
@@ -330,7 +335,7 @@ public class FlyAnimator : MonoBehaviour
         GUI.Label(new Rect(w - 310, h - 30, 300, 25), scoreLabel, infoStyle);
         GUI.Label(new Rect(w - 210, 10, 200, 30), phaseLabel, phaseStyle);
         GUI.Label(new Rect(0, h - 25, w, 20),
-            "[Space] Play/Pause   [R] Reset   [Arrows] Speed/Step   [RMB] Orbit   [Scroll] Zoom   [MMB] Pan   [F] Recenter",
+            "[WASD] Move   [QE] Up/Down   [Space] Play/Pause   [R] Reset   [Arrows] Speed/Step   [Mouse] Orbit/Zoom/Pan   [F] Recenter",
             controlStyle);
     }
 
