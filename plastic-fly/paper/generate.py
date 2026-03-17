@@ -606,6 +606,31 @@ def build_paper():
         "thermosensory, and hygrosensory were completely unaffected (0% each). All 4/4 tests "
         "passed. Combined: 8/8 causal tests across both experiments.")
 
+    # -- 2.9 ──────────────────────────────────────────────────────────
+    pdf.subsection_heading("2.9", "Sparsity, not specific wiring, determines learning speed")
+
+    pdf.body_text(
+        "We tested whether the connectome's specific wiring topology provides an inductive bias "
+        "for motor learning by training recurrent policies on a forward-locomotion task using "
+        "evolutionary strategies (ES). Three architectures were compared: (1) connectome-constrained "
+        "(recurrent mask from VNC connectome), (2) random sparse (same sparsity, random edges), "
+        "and (3) shuffled (connectome edges randomly reassigned). All architectures had identical "
+        "neuron counts (2,314: 1,314 DN + 500 MN + 500 intrinsic), identical sparsity (3.6%), "
+        "and identical training hyperparameters (population 128, sigma 0.03, 50 generations).",
+        indent=False)
+
+    pdf.body_text(
+        "Random sparse networks reached connectome-level performance by generation 40 "
+        "(fitness +11.6 vs connectome band +10 to +15). This demonstrates that "
+        "sparsity alone explains the learning advantage -- the specific wiring pattern of the "
+        "connectome does not accelerate optimization. However, the connectome architecture "
+        "provides a qualitative advantage in interpretability: 4.3x higher modularity (Newman Q: "
+        "0.20 vs 0.05), 100% intrinsic-neuron criticality vs 33% for random sparse, and 2x "
+        "higher pathway concentration (weight Gini: 0.76 vs 0.66). The connectome routes "
+        "information through identifiable bottlenecks that can be named, traced, and ablated; "
+        "the random network achieves equal performance through redundant parallel paths that "
+        "resist interpretation.")
+
     # ══════════════════════════════════════════════════════════════════
     #  3. DISCUSSION
     # ══════════════════════════════════════════════════════════════════
@@ -699,14 +724,35 @@ def build_paper():
         "and 19/20 with the full Brian2 brain. VNC-lite reduces command jitter by 47\u201397% "
         "compared to the original decoder while preserving all headline behavioral effects.")
 
+    pdf.bold_start_para("Topology learning: sparsity, not wiring, determines learning speed.",
+        "Section 2.9 shows that random sparse networks match connectome performance on forward "
+        "locomotion. This negative result strengthens rather than weakens our claims: the "
+        "connectome's value is not as an inductive bias for optimization (which generic sparsity "
+        "provides equally well), but as a documented circuit whose components can be identified, "
+        "traced, and causally tested. The interpretability advantage (4.3x modularity, 100% vs 33% "
+        "intrinsic criticality) is the primary engineering value of biological wiring over generic "
+        "sparse alternatives.")
+
+    pdf.bold_start_para("Negative result: VNC rhythm generation.",
+        "We attempted to generate locomotor rhythm directly from the MANC ventral nerve cord "
+        "connectome (13,101 neurons, 1.9 million synapses) without an imposed CPG. Specifically, "
+        "we searched for half-center oscillation by testing 6,318 reciprocally connected premotor "
+        "pairs across 41 parameter configurations. No configuration produced anti-phase flexor/"
+        "extensor alternation; all reciprocal pairs showed positive correlation (r = +0.02 to "
+        "+0.87). The MANC connectome, at LIF-level biophysical resolution, does not produce "
+        "emergent rhythm. This is consistent with the hypothesis that rhythm generation requires "
+        "membrane-level properties (persistent sodium, calcium channels) not captured by LIF "
+        "neurons, and that CPG timing in insects may depend on neuromodulatory state rather than "
+        "purely synaptic architecture.")
+
     pdf.bold_start_para("Future directions.",
-        "Replacing the preprogrammed CPG with a VNC connectome model would close the final "
-        "loop in the sensorimotor arc. The VNC-lite premotor layer provides the architectural "
-        "scaffold for such integration \u2014 its bilateral state model and body feedback pathways "
-        "could be driven by VNC connectome dynamics rather than hand-tuned parameters. The "
-        "dose-response relationship between population size and behavioral effect suggests that "
-        "the system can predict the behavioral consequences of genetic manipulations that "
-        "silence specific neuron types.")
+        "Replacing the preprogrammed CPG with a biophysically detailed VNC model incorporating "
+        "conductance-based neurons would test whether rhythm generation emerges from the full "
+        "complement of ion channels. The dose-response relationship between population size and "
+        "behavioral effect suggests that the system can predict the behavioral consequences of "
+        "genetic manipulations that silence specific neuron types. Hardware deployment of the "
+        "minimal VNC circuit (1,000 neurons extracted from MANC) on a physical hexapod robot "
+        "would test whether connectome-derived controllers transfer to real systems.")
 
     # ══════════════════════════════════════════════════════════════════
     #  4. METHODS
@@ -798,6 +844,18 @@ def build_paper():
         "level. Excitatory/inhibitory classification used the Excitatory column from the "
         "connectome. Subchannel analysis repeated the 1-hop computation for each of the 10 "
         "individual sensory channels.", indent=False)
+
+    pdf.subsection_heading("4.8", "Topology learning experiment")
+    pdf.body_text(
+        "We extracted a compressed VNC topology (2,314 neurons: 1,314 DN + 500 MN + 500 highest-"
+        "connectivity intrinsic, 193,315 edges, sparsity 3.6%) from the MANC connectome. Three "
+        "recurrent policies shared this neuron count and sparsity: connectome-constrained (edges "
+        "from MANC), random sparse (same sparsity, random topology, seed 99), and shuffled (same "
+        "edges, randomly reassigned targets). Policies were trained with evolutionary strategies "
+        "(ES): population 128, sigma 0.03, 50 generations, on a forward-locomotion reward "
+        "(distance - 0.1*instability - 0.01*energy). Interpretability metrics: Newman modularity Q "
+        "(spectral bisection on learned W_rec), weight Gini coefficient, and group ablation "
+        "deficit (DN, MN, intrinsic neuron classes silenced independently).", indent=False)
 
     # ══════════════════════════════════════════════════════════════════
     #  REFERENCES

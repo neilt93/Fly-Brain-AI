@@ -6,7 +6,7 @@ This experiment quantifies the INTERPRETABILITY advantage of the connectome:
   1. Ablation specificity — targeted neuron removal causes predictable deficits
   2. Functional modularity — neurons specialize for distinct functions
   3. Pathway bottlenecks — information flows through identifiable chokepoints
-  4. Ablation consistency — same ablation → same effect across seeds
+  4. Ablation consistency — same ablation -> same effect across seeds
 
 Usage:
     # Full analysis (~2-3 hours)
@@ -313,11 +313,11 @@ def compute_graph_modularity(policy):
 # ---------------------------------------------------------------------------
 
 def compute_pathway_bottlenecks(policy, topo):
-    """Trace signal paths from DN→MN through the recurrent graph.
+    """Trace signal paths from DN->MN through the recurrent graph.
 
     Metrics:
-    - mean_path_length: average shortest path DN→MN
-    - bottleneck_ratio: fraction of intrinsic neurons on ANY DN→MN shortest path
+    - mean_path_length: average shortest path DN->MN
+    - bottleneck_ratio: fraction of intrinsic neurons on ANY DN->MN shortest path
     - path_diversity: average number of distinct shortest paths per DN-MN pair
     """
     with torch.no_grad():
@@ -330,7 +330,7 @@ def compute_pathway_bottlenecks(policy, topo):
     for i in range(n):
         for j in range(n):
             if mask[i, j] > 0.5 and abs(W[i, j]) > 1e-6:
-                adj[j].append(i)  # j→i edge (W convention: W[i,j] = j→i)
+                adj[j].append(i)  # j->i edge (W convention: W[i,j] = j->i)
 
     dn_set = set(topo["dn_indices"])
     mn_set = set(topo["mn_indices"])
@@ -429,7 +429,7 @@ def compute_weight_structure(policy, topo):
     index = np.arange(1, n + 1)
     gini = float((2.0 * np.sum(index * sorted_w) / (n * np.sum(sorted_w))) - (n + 1.0) / n)
 
-    # DN→intrinsic vs intrinsic→MN weight ratios
+    # DN->intrinsic vs intrinsic->MN weight ratios
     dn_set = set(topo["dn_indices"])
     mn_set = set(topo["mn_indices"])
 
@@ -598,11 +598,11 @@ def print_comparison_summary(all_results):
 
     print(f"\n{'='*80}")
     print("Interpretation:")
-    print("  Higher modularity Q → more structured, interpretable")
-    print("  Higher Gini → weight inequality → structured pathways")
-    print("  Lower bottleneck ratio → fewer relay neurons → clearer pathways")
-    print("  Higher top-10 concentration → fewer critical neurons → targeted ablation")
-    print("  Lower entropy → effects concentrated in few neurons → interpretable")
+    print("  Higher modularity Q -> more structured, interpretable")
+    print("  Higher Gini -> weight inequality -> structured pathways")
+    print("  Lower bottleneck ratio -> fewer relay neurons -> clearer pathways")
+    print("  Higher top-10 concentration -> fewer critical neurons -> targeted ablation")
+    print("  Lower entropy -> effects concentrated in few neurons -> interpretable")
 
 
 def main():
