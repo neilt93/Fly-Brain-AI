@@ -120,7 +120,7 @@ _JOINT_PARAMS = {
     29: (-1.839, 0.08),   # Coxa_roll     (mirrored)
     30: (-0.793, 0.13),   # Coxa_yaw      (mirrored)
     31: (-1.492, 0.30),   # Femur         (same as LM)
-    32: (+0.057, 0.46),   # Femur_roll    (same as LM, unsigned)
+    32: (-0.057, 0.46),   # Femur_roll    (mirrored from LM)
     33: (+2.051, 0.18),   # Tibia         (same as LM)
     34: (-0.747, 0.26),   # Tarsus1       (same as LM, unmapped)
     # RH (T3 right): joints 35-41
@@ -205,25 +205,38 @@ class MotorNeuronDecoder:
         # Without normalization, joints with many more flexors than extensors
         # (e.g., 15 flexors vs 4 extensors for tibia) are biased toward flexion
         # when all MNs fire at similar rates.
-        self._joint_pos_count = np.zeros(42, dtype=np.float64)
-        self._joint_neg_count = np.zeros(42, dtype=np.float64)
+        real_pos_count = np.zeros(42, dtype=np.float64)
+        real_neg_count = np.zeros(42, dtype=np.float64)
         for i, (j, d) in enumerate(zip(self._joint_indices, self._directions)):
             if d > 0:
-                self._joint_pos_count[j] += abs(d)
+                real_pos_count[j] += abs(d)
             elif d < 0:
-                self._joint_neg_count[j] += abs(d)
+                real_neg_count[j] += abs(d)
 
-        # Symmetrize MN pool counts between corresponding L/R joints so
-        # asymmetric MANC pool sizes don't introduce heading bias.
+        # Symmetrize MN pool counts between corresponding L/R joints.
+        # Store both real and symmetrized counts — the per-MN weight correction
+        # factor ensures that asymmetric MANC pool sizes don't bias the decoder.
+        self._joint_pos_count = real_pos_count.copy()
+        self._joint_neg_count = real_neg_count.copy()
         for li, leg_l in enumerate(["LF", "LM", "LH"]):
             ri = li + 3  # RF, RM, RH
             off_l, off_r = LEG_OFFSET[leg_l], LEG_OFFSET[LEGS[ri]]
             for dof in range(7):
                 jl, jr = off_l + dof, off_r + dof
-                avg_pos = (self._joint_pos_count[jl] + self._joint_pos_count[jr]) / 2.0
-                avg_neg = (self._joint_neg_count[jl] + self._joint_neg_count[jr]) / 2.0
+                avg_pos = (real_pos_count[jl] + real_pos_count[jr]) / 2.0
+                avg_neg = (real_neg_count[jl] + real_neg_count[jr]) / 2.0
                 self._joint_pos_count[jl] = self._joint_pos_count[jr] = avg_pos
                 self._joint_neg_count[jl] = self._joint_neg_count[jr] = avg_neg
+
+        # Per-MN weight correction: scale each MN's contribution so that the
+        # sum for a pool with uniform rates equals sym_count * rate (not real_count * rate).
+        # correction = sym_count / real_count for that MN's pool.
+        self._mn_weight = np.ones(len(self._body_ids), dtype=np.float64)
+        for i, (j, d) in enumerate(zip(self._joint_indices, self._directions)):
+            if d > 0 and real_pos_count[j] > 0:
+                self._mn_weight[i] = self._joint_pos_count[j] / real_pos_count[j]
+            elif d < 0 and real_neg_count[j] > 0:
+                self._mn_weight[i] = self._joint_neg_count[j] / real_neg_count[j]
 
         # Build per-joint amplitude and rest-angle arrays (42,)
         # Calibrated from actual CPG/PreprogrammedSteps output per leg segment
@@ -289,10 +302,11 @@ class MotorNeuronDecoder:
             j = self._joint_indices_arr[idx]
             d = self._directions_arr[idx]
             rate = firing_rates_hz[k]
+            w = self._mn_weight[idx]  # pool-composition correction
             if d > 0:
-                pos_sum[j] += abs(d) * rate
+                pos_sum[j] += abs(d) * rate * w
             elif d < 0:
-                neg_sum[j] += abs(d) * rate
+                neg_sum[j] += abs(d) * rate * w
 
         # Mean rate per pool (avoid /0)
         pos_mean = np.divide(pos_sum, self._joint_pos_count,
