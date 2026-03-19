@@ -21,6 +21,7 @@ class BodyObservation:
     vision: np.ndarray | None = None        # (2, 721, 2) ommatidia per eye
     odor_intensity: np.ndarray | None = None  # (k, 4) odor at 4 sensors
     looming_intensity: np.ndarray | None = None  # (2,) left/right looming [0-1]
+    body_position: np.ndarray | None = None  # (3,) mm, optional global position when available
 
 
 @dataclass

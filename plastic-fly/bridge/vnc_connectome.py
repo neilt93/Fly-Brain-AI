@@ -42,6 +42,7 @@ DATA_DIR = ROOT / "data"
 class VNCInput:
     """DN group firing rates from brain decoder."""
     group_rates: dict  # {"forward": Hz, "turn_left": Hz, "turn_right": Hz, "rhythm": Hz, "stance": Hz}
+    sensory_rates: dict | None = None  # body_id -> Hz, proprioceptive input from legs
 
 
 @dataclass
@@ -91,6 +92,9 @@ class VNCConfig:
     rhythm_freq_hz: float = 12.0   # Stepping frequency (Hz)
     rhythm_base_hz: float = 100.0  # Baseline oscillation amplitude (Hz)
     rhythm_depth: float = 0.92     # Modulation depth (0=tonic, 1=full on/off)
+
+    # Pugliese CPG: replace sine rhythm with connectome-derived oscillator
+    use_cpg: bool = False          # Use PuglieseCPG instead of sine
 
     # Synapse parameters
     w_syn_mV: float = 0.275         # Base synaptic weight (mV per synapse)
@@ -470,7 +474,8 @@ class Brian2VNCRunner:
         build_time = time() - t0
         print(f"  Network ready in {build_time:.1f}s: "
               f"{self.n_neurons} neurons ({self.n_dn} DN, {self.n_mn} MN, "
-              f"{self.n_intrinsic} intrinsic), {self.n_synapses:,} synapses")
+              f"{self.n_intrinsic} intrinsic, {self.n_sensory} sensory), "
+              f"{self.n_synapses:,} synapses")
 
         if warmup and self.cfg.warmup_ms > 0:
             self._warmup()
@@ -546,15 +551,25 @@ class Brian2VNCRunner:
         self._intrinsic_df = ann[intrinsic_mask].copy()
         intrinsic_ids = set(self._intrinsic_df["bodyId"].values)
 
+        # --- Leg sensory neurons (via leg nerves: ProLN/MesoLN/MetaLN) ---
+        sensory_mask = (
+            (ann["superclass"] == "vnc_sensory")
+            & (ann["entryNerve"].isin(["ProLN", "MesoLN", "MetaLN"]))
+        )
+        self._sensory_df = ann[sensory_mask].copy()
+        sensory_ids = set(self._sensory_df["bodyId"].values)
+        self.n_sensory = len(sensory_ids)
+        self._sensory_ids = sensory_ids
+
         # --- Combined neuron set ---
-        all_ids = dn_ids | mn_ids | intrinsic_ids
+        all_ids = dn_ids | mn_ids | intrinsic_ids | sensory_ids
         self.n_dn = len(dn_ids)
         self.n_mn = len(mn_ids)
         self.n_intrinsic = len(intrinsic_ids)
         self.n_neurons = len(all_ids)
 
         print(f"  Selected neurons: {self.n_dn} DN + {self.n_mn} MN + "
-              f"{self.n_intrinsic} intrinsic = {self.n_neurons}")
+              f"{self.n_intrinsic} intrinsic + {self.n_sensory} sensory = {self.n_neurons}")
 
         # Create body_id <-> brian2 index mapping
         all_ids_sorted = sorted(all_ids)
@@ -902,6 +917,37 @@ class Brian2VNCRunner:
         for idx in self._dn_brian_idx:
             self.neurons[int(idx)].rfc = 0 * ms
 
+        # --- Sensory input via PoissonGroup ---
+        sensory_sorted = sorted(self._sensory_ids)
+        self._sensory_brian_idx = np.array(
+            [self._bodyid_to_idx[bid] for bid in sensory_sorted
+             if bid in self._bodyid_to_idx],
+            dtype=int,
+        )
+        self._sensory_bodyid_to_input_idx = {
+            int(bid): i for i, bid in enumerate(sensory_sorted)
+            if bid in self._bodyid_to_idx
+        }
+        n_sensory_input = len(self._sensory_brian_idx)
+
+        if n_sensory_input > 0:
+            self.sensory_group = PoissonGroup(
+                n_sensory_input,
+                rates=np.ones(n_sensory_input) * 10.0 * Hz,
+                name="sensory_input",
+            )
+            self.sensory_syn = Synapses(
+                self.sensory_group, self.neurons, "w : volt",
+                on_pre="g += w", name="sensory_input_syn",
+            )
+            self.sensory_syn.connect(
+                i=np.arange(n_sensory_input), j=self._sensory_brian_idx)
+            self.sensory_syn.w = params["w_syn"] * cfg.w_input_scale * 0.5
+            print(f"  Sensory input group: {n_sensory_input} neurons")
+        else:
+            self.sensory_group = None
+            self.sensory_syn = None
+
         # --- Background noise PoissonGroup ---
         # Low-rate Poisson input to ALL neurons breaks symmetry and
         # helps neurons near threshold fire spontaneously, seeding oscillation.
@@ -933,6 +979,8 @@ class Brian2VNCRunner:
             self.neurons, self.synapses, self.spike_mon,
             self.input_group, self.input_syn,
         ]
+        if self.sensory_group is not None:
+            net_objects.extend([self.sensory_group, self.sensory_syn])
         if self.bg_input is not None:
             net_objects.extend([self.bg_input, self.bg_syn])
         self.net = Network(*net_objects)
@@ -1004,6 +1052,16 @@ class Brian2VNCRunner:
 
         self.input_group.rates = new_rates * self._Hz
 
+        # --- Update sensory input rates if provided ---
+        if vnc_input.sensory_rates and self.sensory_group is not None:
+            n_sens = len(self._sensory_brian_idx)
+            sensory_rates_arr = np.full(n_sens, 10.0, dtype=np.float64)
+            for bid, rate in vnc_input.sensory_rates.items():
+                idx = self._sensory_bodyid_to_input_idx.get(int(bid))
+                if idx is not None:
+                    sensory_rates_arr[idx] = float(rate)
+            self.sensory_group.rates = sensory_rates_arr * self._Hz
+
         # --- Run simulation ---
         counts_before = np.array(self.spike_mon.count, dtype=np.int64)
         self.net.run(sim_ms * self._ms)
@@ -1021,6 +1079,59 @@ class Brian2VNCRunner:
             mn_body_ids=self._mn_body_ids.copy(),
             firing_rates_hz=tonic_rates,
         )
+
+    def silence_neurons(self, body_ids: set[int]):
+        """Silence a set of neurons by making them permanently refractory.
+
+        Sets refractory period to 1e9 seconds so the neuron never fires,
+        resets voltage to rest, and zeros all outgoing synaptic weights.
+        Used for lateral ablation and other targeted silencing experiments.
+
+        Args:
+            body_ids: MANC body IDs of neurons to silence.
+        """
+        from brian2 import mV, second
+        silenced = 0
+        for bid in body_ids:
+            if bid in self._bodyid_to_idx:
+                idx = self._bodyid_to_idx[bid]
+                # Permanently refractory — neuron will never fire again
+                self.neurons[int(idx)].rfc = 1e9 * second
+                self.neurons[int(idx)].v = self.cfg.v_rest_mV * mV
+                # Zero outgoing synaptic weights for this neuron
+                pre_mask = (self.synapses.i == idx)
+                if hasattr(pre_mask, '__len__') and np.any(pre_mask):
+                    self.synapses.w[pre_mask] = 0 * mV
+                silenced += 1
+        print(f"  Silenced {silenced}/{len(body_ids)} neurons")
+
+    def get_intrinsic_by_side(self) -> dict[str, set[int]]:
+        """Return intrinsic interneuron body IDs grouped by somaSide.
+
+        Loads annotations lazily if _intrinsic_df was freed.
+        Returns: {"L": set(...), "R": set(...), "M": set(...)}
+        """
+        import pandas as pd
+
+        # If _intrinsic_df was freed, reload annotations
+        if not hasattr(self, '_intrinsic_df') or self._intrinsic_df is None:
+            import pyarrow.feather as feather
+            ann = pd.DataFrame(feather.read_feather(str(self.cfg.annotations_path)))
+            intrinsic_mask = (
+                (ann["superclass"] == "vnc_intrinsic")
+                & (ann["somaNeuromere"].isin(["T1", "T2", "T3"]))
+            )
+            intrinsic_df = ann[intrinsic_mask]
+        else:
+            intrinsic_df = self._intrinsic_df
+
+        result = {"L": set(), "R": set(), "M": set()}
+        for _, row in intrinsic_df.iterrows():
+            bid = int(row["bodyId"])
+            side = str(row.get("somaSide", "")) if pd.notna(row.get("somaSide")) else ""
+            if side in result:
+                result[side].add(bid)
+        return result
 
     @property
     def current_time_ms(self) -> float:

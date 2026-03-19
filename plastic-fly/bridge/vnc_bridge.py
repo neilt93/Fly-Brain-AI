@@ -33,12 +33,16 @@ from bridge.vnc_connectome import (
     FakeVNCRunner, Brian2VNCRunner, create_vnc_runner,
 )
 from bridge.mn_decoder import MotorNeuronDecoder
+from bridge.vnc_sensory_encoder import VNCSensoryEncoder
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # Tripod phase offsets: LF, LM, LH, RF, RM, RH
 _TRIPOD_PHASES = np.array([0, np.pi, 0, np.pi, 0, np.pi])
+
+# CPG weights file path
+_CPG_WEIGHTS_PATH = DATA_DIR / "cpg_weights.json"
 
 
 class VNCBridge:
@@ -64,14 +68,19 @@ class VNCBridge:
         mn_rate_scale: float = 35.0,
         mn_alpha: float = 0.4,
         shuffle_seed: int | None = None,
+        vnc_runner=None,
+        use_cpg: bool = False,
     ):
         self.use_fake = use_fake_vnc
-        self.vnc = create_vnc_runner(
-            use_fake=use_fake_vnc,
-            cfg=vnc_cfg,
-            shuffle_seed=shuffle_seed,
-            minimal=use_minimal_vnc,
-        )
+        if vnc_runner is not None:
+            self.vnc = vnc_runner
+        else:
+            self.vnc = create_vnc_runner(
+                use_fake=use_fake_vnc,
+                cfg=vnc_cfg,
+                shuffle_seed=shuffle_seed,
+                minimal=use_minimal_vnc,
+            )
 
         if mn_mapping_path is None:
             mn_mapping_path = DATA_DIR / "mn_joint_mapping.json"
@@ -99,21 +108,101 @@ class VNCBridge:
             self._vnc_cfg = vnc_cfg or VNCConfig()
             self._rhythm_map = {}
 
-    def _apply_rhythm(
+        # Pugliese CPG (optional, replaces sine rhythm)
+        self.use_cpg = use_cpg or (self._vnc_cfg and self._vnc_cfg.use_cpg)
+        self._cpg = None
+        if self.use_cpg:
+            from bridge.cpg_pugliese import PuglieseCPG
+            cpg_path = _CPG_WEIGHTS_PATH
+            if cpg_path.exists():
+                self._cpg = PuglieseCPG.from_json(cpg_path)
+                print(f"  VNCBridge: Pugliese CPG loaded from {cpg_path}")
+            else:
+                print(f"  VNCBridge: WARNING — cpg_weights.json not found, falling back to sine")
+                self.use_cpg = False
+
+        # VNC proprioceptive encoder (Tier 1B)
+        self._vnc_sensory: VNCSensoryEncoder | None = None
+        if (self._is_brian2
+                and hasattr(self.vnc, 'sensory_group')
+                and self.vnc.sensory_group is not None):
+            try:
+                self._vnc_sensory = VNCSensoryEncoder.from_manc_annotations(
+                    self.vnc.cfg.annotations_path,
+                )
+            except Exception as e:
+                print(f"  VNCBridge: proprioceptive encoder not available: {e}")
+
+    def _apply_cpg_rhythm(
+        self,
+        tonic_output: VNCOutput,
+        group_rates: dict,
+        dt_s: float,
+    ) -> VNCOutput:
+        """Apply Pugliese CPG rhythm modulation to tonic MN rates.
+
+        Replaces the sine-based _apply_rhythm_sine with a connectome-derived
+        E-E-I oscillator. The CPG state advances every body step, producing
+        biologically grounded rhythm that varies with forward drive.
+        """
+        cfg = self._vnc_cfg
+
+        # Advance CPG state
+        fwd_rate = float(group_rates.get("forward", 0.0))
+        self._cpg.step(dt_s, forward_drive=fwd_rate)
+
+        # Forward rate modulates rhythm amplitude (matches sine behavior)
+        amp_scale = float(np.clip(np.tanh(fwd_rate / 20.0), 0.1, 1.0))
+
+        # Turn asymmetry
+        turn_l = float(group_rates.get("turn_left", 0.0))
+        turn_r = float(group_rates.get("turn_right", 0.0))
+        asym_l = float(np.clip(1.0 - np.tanh(turn_l / 40.0) * 0.5, 0.3, 1.0))
+        asym_r = float(np.clip(1.0 - np.tanh(turn_r / 40.0) * 0.5, 0.3, 1.0))
+
+        tonic = tonic_output.firing_rates_hz
+        mn_ids = tonic_output.mn_body_ids
+        n_mn = len(mn_ids)
+        depth = cfg.rhythm_depth
+        gain_norm_hz = 30.0
+
+        rates = np.zeros(n_mn, dtype=np.float32)
+        for j in range(n_mn):
+            bid = int(mn_ids[j])
+            base = float(tonic[j])
+
+            if bid in self._rhythm_map:
+                rhythm_unit = self._rhythm_map[bid]
+                leg_idx = rhythm_unit // 2
+                is_ext = (rhythm_unit % 2) == 0
+
+                # Get CPG oscillatory signal for this leg [-1, 1]
+                osc = self._cpg.get_osc_signal(leg_idx)
+
+                if is_ext:
+                    mod = max(0.0, 0.5 - 0.5 * osc)
+                else:
+                    mod = max(0.0, 0.5 + 0.5 * osc)
+
+                gain = 0.5 + 0.5 * min(base / gain_norm_hz, 1.0)
+                side_scale = asym_l if leg_idx < 3 else asym_r
+
+                rates[j] = float(
+                    cfg.rhythm_base_hz * gain * amp_scale * side_scale
+                    * ((1.0 - depth) + depth * mod)
+                )
+            else:
+                rates[j] = base
+
+        return VNCOutput(mn_body_ids=mn_ids.copy(), firing_rates_hz=rates)
+
+    def _apply_rhythm_sine(
         self,
         tonic_output: VNCOutput,
         group_rates: dict,
         t_s: float,
     ) -> VNCOutput:
-        """Apply post-hoc rhythm modulation to tonic MN rates.
-
-        The Brian2 VNC provides a tonic gain profile (which MNs fire and
-        how much based on MANC connectivity). This method modulates those
-        rates with a tripod-phased sinusoidal oscillation to create the
-        temporal walking pattern.
-
-        Applied at body-step frequency (0.1ms) for smooth oscillation.
-        """
+        """Apply sine-based rhythm modulation to tonic MN rates (fallback)."""
         cfg = self._vnc_cfg
         depth = cfg.rhythm_depth
         rhythm_rate = float(group_rates.get("rhythm", 0.0))
@@ -193,7 +282,7 @@ class VNCBridge:
         Args:
             group_rates: {"forward": Hz, "turn_left": Hz, ...} from decoder
             dt_s: Time step in seconds
-            body_obs: Optional body observation (unused, kept for API compat)
+            body_obs: Optional body observation for proprioceptive VNC feedback
 
         Returns:
             {'joints': ndarray(42), 'adhesion': ndarray(6)}
@@ -204,18 +293,30 @@ class VNCBridge:
 
             if self._cached_tonic_output is None:
                 # First call -- run VNC once to get initial tonic output
+                sensory_rates = None
+                if body_obs is not None and self._vnc_sensory is not None:
+                    sensory_rates = self._vnc_sensory.encode(body_obs)
                 self._cached_tonic_output = self.vnc.step(
-                    VNCInput(group_rates=group_rates), sim_ms=dt_s * 1000.0
+                    VNCInput(group_rates=group_rates,
+                             sensory_rates=sensory_rates),
+                    sim_ms=dt_s * 1000.0,
                 )
                 self._cached_group_rates = group_rates
 
             # Apply rhythm at body-step resolution
-            t_s = self._body_time_ms / 1000.0
-            modulated = self._apply_rhythm(
-                self._cached_tonic_output,
-                self._cached_group_rates,
-                t_s,
-            )
+            if self.use_cpg and self._cpg is not None:
+                modulated = self._apply_cpg_rhythm(
+                    self._cached_tonic_output,
+                    self._cached_group_rates,
+                    dt_s,
+                )
+            else:
+                t_s = self._body_time_ms / 1000.0
+                modulated = self._apply_rhythm_sine(
+                    self._cached_tonic_output,
+                    self._cached_group_rates,
+                    t_s,
+                )
             action = self.mn_decoder.decode(
                 mn_body_ids=modulated.mn_body_ids,
                 firing_rates_hz=modulated.firing_rates_hz,
@@ -224,6 +325,14 @@ class VNCBridge:
             # FakeVNC mode: step every call (already includes oscillation)
             sim_ms = dt_s * 1000.0
             vnc_output = self.vnc.step(VNCInput(group_rates=group_rates), sim_ms=sim_ms)
+
+            # If CPG is active, advance it for timing consistency even though
+            # FakeVNC generates its own rhythm. This keeps CPG state in sync
+            # so switching to Brian2 VNC later is seamless.
+            if self.use_cpg and self._cpg is not None:
+                fwd_rate = float(group_rates.get("forward", 0.0))
+                self._cpg.step(dt_s, forward_drive=fwd_rate)
+
             action = self.mn_decoder.decode(
                 mn_body_ids=vnc_output.mn_body_ids,
                 firing_rates_hz=vnc_output.firing_rates_hz,
@@ -232,7 +341,8 @@ class VNCBridge:
         self._step_count += 1
         return action
 
-    def step_brain(self, group_rates: dict, sim_ms: float = 20.0) -> None:
+    def step_brain(self, group_rates: dict, sim_ms: float = 20.0,
+                   body_obs: BodyObservation | None = None) -> None:
         """Run VNC simulation at brain-step frequency.
 
         For Brian2 mode: runs the Brian2 network and caches tonic MN output.
@@ -243,9 +353,15 @@ class VNCBridge:
         Args:
             group_rates: DN group firing rates from decoder
             sim_ms: Simulation window in milliseconds
+            body_obs: Optional body observation for proprioceptive feedback
         """
+        sensory_rates = None
+        if body_obs is not None and self._vnc_sensory is not None:
+            sensory_rates = self._vnc_sensory.encode(body_obs)
+
         vnc_output = self.vnc.step(
-            VNCInput(group_rates=group_rates), sim_ms=sim_ms
+            VNCInput(group_rates=group_rates, sensory_rates=sensory_rates),
+            sim_ms=sim_ms,
         )
         self._cached_tonic_output = vnc_output
         self._cached_group_rates = group_rates
@@ -257,6 +373,8 @@ class VNCBridge:
         self._cached_tonic_output = None
         self._cached_group_rates = {}
         self._body_time_ms = 0.0
+        if self._cpg is not None:
+            self._cpg.reset()
 
     @property
     def current_time_ms(self) -> float:
@@ -264,12 +382,14 @@ class VNCBridge:
 
     def summary(self) -> str:
         """Return diagnostic summary."""
-        mode = "FakeVNC (per-step)" if self.use_fake else "Brian2 VNC (cached+rhythm)"
+        rhythm_type = "CPG (Pugliese)" if self.use_cpg else "sine"
+        mode = "FakeVNC (per-step)" if self.use_fake else f"Brian2 VNC (cached+{rhythm_type})"
         lines = [
             f"VNCBridge: {type(self.vnc).__name__} ({mode})",
             f"  VNC time: {self.current_time_ms:.0f}ms",
             f"  Body time: {self._body_time_ms:.0f}ms",
             f"  Steps: {self._step_count}",
+            f"  Rhythm: {rhythm_type}",
             "",
             self.mn_decoder.summary(),
         ]

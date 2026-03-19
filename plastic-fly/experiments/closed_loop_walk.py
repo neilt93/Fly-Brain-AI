@@ -51,11 +51,20 @@ from bridge.flygym_adapter import FlyGymAdapter
 
 def _write_json_atomic(path: Path, payload: dict):
     """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
+    import os
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     with open(tmp_path, "w") as f:
         json.dump(payload, f, indent=2)
-    tmp_path.replace(path)
+    try:
+        tmp_path.replace(path)
+    except PermissionError:
+        # Windows: target file may be locked; fall back to remove-then-rename
+        try:
+            os.remove(str(path))
+        except FileNotFoundError:
+            pass
+        os.rename(str(tmp_path), str(path))
 
 
 def _record_frame(
@@ -129,10 +138,12 @@ def run_closed_loop(
     motor_mode: str = "cpg",  # "cpg", "vnc", "vnc-fake"
     vnc_shuffle_seed: int | None = None,
     ablate_groups: list[str] | None = None,
+    use_cpg: bool = False,
+    connectome: str = "flywire",
 ):
     import flygym
 
-    cfg = BridgeConfig()
+    cfg = BridgeConfig(connectome=connectome)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -179,7 +190,8 @@ def run_closed_loop(
     if use_vnc:
         from bridge.vnc_bridge import VNCBridge
         use_fake_vnc = (motor_mode == "vnc-fake")
-        vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc, shuffle_seed=vnc_shuffle_seed)
+        vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc, shuffle_seed=vnc_shuffle_seed,
+                               use_cpg=use_cpg)
         motor_label = f"VNC ({'fake' if use_fake_vnc else 'MANC Brian2'})"
         if vnc_shuffle_seed is not None:
             motor_label += f" SHUFFLED(seed={vnc_shuffle_seed})"
@@ -202,6 +214,7 @@ def run_closed_loop(
         readout_ids=readout_ids,
         use_fake=use_fake_brain,
         warmup_ms=cfg.brain_warmup_ms,
+        connectome=connectome,
     )
 
     # --- Initialize FlyGym ---
@@ -302,7 +315,8 @@ def run_closed_loop(
             if use_vnc:
                 # VNC mode: step VNC at brain frequency, cache for body steps
                 current_group_rates = group_rates
-                vnc_bridge.step_brain(group_rates, sim_ms=cfg.brain_dt_ms)
+                vnc_bridge.step_brain(group_rates, sim_ms=cfg.brain_dt_ms,
+                                     body_obs=body_obs)
                 # Create a LocomotionCommand for logging (approximate from group rates)
                 current_cmd = LocomotionCommand(
                     forward_drive=float(np.tanh(group_rates["forward"] / cfg.rate_scale)),
@@ -527,6 +541,10 @@ if __name__ == "__main__":
                         help="Shuffle VNC connectivity (random seed)")
     parser.add_argument("--ablate", nargs="+", default=None, metavar="GROUP",
                         help="Zero out DN group rates (e.g. --ablate forward)")
+    parser.add_argument("--cpg", action="store_true",
+                        help="Use Pugliese CPG instead of sine rhythm (VNC modes only)")
+    parser.add_argument("--connectome", choices=["flywire", "banc"], default="flywire",
+                        help="Connectome dataset to use (default: flywire)")
 
     args = parser.parse_args()
 
@@ -547,4 +565,6 @@ if __name__ == "__main__":
         motor_mode=motor_mode,
         vnc_shuffle_seed=args.vnc_shuffle,
         ablate_groups=args.ablate,
+        use_cpg=args.cpg,
+        connectome=args.connectome,
     )
