@@ -35,6 +35,7 @@ class FlyGymAdapter:
         contact_forces = np.clip(contact_forces / 10.0, 0.0, 1.0)
 
         # Fly state: (4, 3) → velocity [1], orientation [2]
+        body_position = fly[0] if fly.ndim == 2 and fly.shape[0] >= 1 else np.zeros(3)
         body_velocity = fly[1] if fly.ndim == 2 and fly.shape[0] >= 2 else np.zeros(3)
         body_orientation = fly[2] if fly.ndim == 2 and fly.shape[0] >= 3 else np.zeros(3)
 
@@ -54,4 +55,5 @@ class FlyGymAdapter:
             body_orientation=body_orientation.astype(np.float32),
             vision=vision,
             odor_intensity=odor_intensity,
+            body_position=body_position.astype(np.float32),
         )

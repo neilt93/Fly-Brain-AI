@@ -196,6 +196,23 @@ We are testing whether our bridge uncovers a more precise organization than the 
 
 ---
 
+## CLAIM 7: Connectome creates structured population codes
+
+**Our claim:** The intact connectome activates 25.5x more condition-responsive DNs than a degree-matched shuffled control (102 vs 4). Sensory conditions are linearly decodable at 2.2x chance from the DN population. The representational geometry does NOT mirror 1-hop wiring (RSA r = -0.36), indicating multi-synaptic dynamics reshape the coding space.
+
+| Metric | Intact | Shuffled | Interpretation |
+|---|---|---|---|
+| Responsive DNs | 102/365 (28%) | 4/365 (1%) | Wiring creates modality-specific coding |
+| Decoding accuracy | 36.9% | 10.0% | Condition information requires specific wiring |
+| Loom-odor dissimilarity | 0.97 | 0.91 | Cross-modal separation in both, stronger in intact |
+| RSA (neural vs structural) | r = -0.36 | r = -0.11 | Neural geometry ≠ 1-hop wiring geometry |
+
+**Required framing:** The connectome is *necessary* for structured representations (25.5x ratio) but the representational geometry is an emergent property of network dynamics, not a simple readout of anatomy. This is consistent with multi-synaptic signal propagation reshaping the population code relative to direct connectivity.
+
+**Literature grounding:** Standard population coding tools (PCA, linear probes, RSA) applied to connectome-constrained LIF simulation. No prior work has performed representational geometry analysis on a full connectome-constrained brain simulation.
+
+---
+
 # REFRAMING SUMMARY
 
 | Old framing | New framing |

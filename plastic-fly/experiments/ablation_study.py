@@ -159,11 +159,12 @@ def run_single_condition(
     shuffle_seed: int | None = None,
     readout_version: int = 2,
     output_path: Path | None = None,
+    connectome: str = "flywire",
 ) -> dict:
     """Run one ablation condition and return results + behavior metrics."""
     import flygym
 
-    cfg = BridgeConfig()
+    cfg = BridgeConfig(connectome=connectome)
 
     if readout_version == 5:
         sensory_ids = np.load(cfg.data_dir / "sensory_ids_v3.npy")
@@ -206,7 +207,7 @@ def run_single_condition(
     brain = create_brain_runner(
         sensory_ids=sensory_ids, readout_ids=readout_ids,
         use_fake=use_fake_brain, warmup_ms=cfg.brain_warmup_ms,
-        shuffle_seed=shuffle_seed,
+        shuffle_seed=shuffle_seed, connectome=connectome,
     )
 
     fly_obj = flygym.Fly(enable_adhesion=True, init_pose="stretch", control="position")
@@ -353,8 +354,9 @@ def run_ablation_study(
     conditions: list[str] | None = None,
     shuffle_seed: int | None = None,
     readout_version: int = 2,
+    connectome: str = "flywire",
 ):
-    cfg = BridgeConfig()
+    cfg = BridgeConfig(connectome=connectome)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -395,6 +397,7 @@ def run_ablation_study(
             shuffle_seed=shuffle_seed,
             readout_version=readout_version,
             output_path=output_path,
+            connectome=connectome,
         )
         if "error" in r:
             print("  ERROR: %s" % r["error"])
@@ -581,6 +584,8 @@ if __name__ == "__main__":
     parser.add_argument("--shuffle-seed", type=int, default=None,
                         help="Shuffle connectome postsynaptic targets (control)")
     parser.add_argument("--readout-version", type=int, default=2, choices=[1, 2, 3, 5])
+    parser.add_argument("--connectome", choices=["flywire", "banc"], default="flywire",
+                        help="Connectome dataset")
     args = parser.parse_args()
 
     run_ablation_study(
@@ -592,4 +597,5 @@ if __name__ == "__main__":
         conditions=args.conditions,
         shuffle_seed=args.shuffle_seed,
         readout_version=args.readout_version,
+        connectome=args.connectome,
     )

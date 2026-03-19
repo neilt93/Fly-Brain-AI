@@ -240,10 +240,10 @@ def main():
                 topo["n_neurons"], cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, joint_params,
                 dn_indices=topo["dn_indices"], mn_indices=topo["mn_indices"]),
             "random_sparse": lambda: build_random_sparse_policy(
-                topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+                topo, seed=seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
                 recurrence_steps=cfg.recurrence_steps, joint_params=joint_params),
             "shuffled": lambda: build_shuffled_policy(
-                topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+                topo, seed=seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
                 recurrence_steps=cfg.recurrence_steps, joint_params=joint_params),
         }
 

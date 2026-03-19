@@ -33,7 +33,7 @@ Targeted silencing of locomotion neuron groups causes predicted behavioral defic
 python -m experiments.ablation_study --readout-version 2
 ```
 
-Expected: `Causal tests: 10/10 passed` — forward ablation reduces distance 53%, turn ablation shifts heading, rhythm ablation halves step frequency.
+Expected: `Causal tests: 10/10 passed` — forward ablation reduces distance 46%, turn ablation shifts heading, rhythm ablation halves step frequency.
 
 ### 2. Odor Valence Discrimination (6/6 tests pass, ~9 min)
 
@@ -100,6 +100,7 @@ Body observation -> SensoryEncoder -> Brian2 LIF (139k neurons) -> DescendingDec
 | v2 | 204 | Ablation, odor valence (hybrid annotated + connectivity) |
 | v3 | 359 | Visual experiments (adds DN annotations) |
 | v4 | 389 | Looming (v3 + LPLC2 DN targets) |
+| v5 | 365 | Steering, representational geometry |
 
 ## Experiments
 
@@ -112,6 +113,12 @@ Body observation -> SensoryEncoder -> Brian2 LIF (139k neurons) -> DescendingDec
 | Sensory perturbation | `experiments/sensory_perturbation.py` | 9/10 tests, asymmetric input -> turn |
 | Closed-loop walk | `experiments/closed_loop_walk.py` | Brain-driven walking at 22mm/s |
 | Robustness study | `experiments/robustness_study.py` | 10-seed causal replication |
+| Representational geometry | `experiments/representational_geometry.py` | PCA/decoding/RSA on DN population codes (7/10) |
+| DNb05 bottleneck | `experiments/bottleneck_causal.py` | Thermo/hygro bottleneck, 16.4x specificity (4/4) |
+| VNC validation | `experiments/vnc_validation.py` | MANC VNC (13K neurons) ablation, -97% (19/20) |
+| DN phenotype prediction | `experiments/dn_phenotype_prediction.py` | DN activity -> behavior prediction |
+| VNC lateral ablation | `experiments/vnc_lateral_ablation.py` | Unilateral DN ablation tests |
+| Published phenotype | `experiments/published_phenotype_validation.py` | Literature phenotype benchmarks |
 
 ## Data Files
 

@@ -340,16 +340,16 @@ def main():
 
     # --- Build policies (all share same I/O constraint: input→DN, output→MN) ---
     builders = {
-        "connectome": lambda: build_connectome_policy(
+        "connectome": lambda run_seed: build_connectome_policy(
             topo, cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, joint_params),
-        "dense": lambda: build_dense_policy(
+        "dense": lambda run_seed: build_dense_policy(
             topo["n_neurons"], cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps,
             joint_params, dn_indices=topo["dn_indices"], mn_indices=topo["mn_indices"]),
-        "random_sparse": lambda: build_random_sparse_policy(
-            topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+        "random_sparse": lambda run_seed: build_random_sparse_policy(
+            topo, seed=run_seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
             recurrence_steps=cfg.recurrence_steps, joint_params=joint_params),
-        "shuffled": lambda: build_shuffled_policy(
-            topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+        "shuffled": lambda run_seed: build_shuffled_policy(
+            topo, seed=run_seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
             recurrence_steps=cfg.recurrence_steps, joint_params=joint_params),
     }
 
@@ -359,7 +359,7 @@ def main():
 
     for arch_name in architectures:
         for seed in seed_list:
-            policy = builders[arch_name]()
+            policy = builders[arch_name](seed)
             result = run_training(arch_name, policy, cfg, seed=seed)
             all_results.append(result)
 

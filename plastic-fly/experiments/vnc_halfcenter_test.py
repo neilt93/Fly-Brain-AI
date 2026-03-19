@@ -29,70 +29,68 @@ import pyarrow.feather as feather
 MANC = Path(__file__).resolve().parent.parent / "data" / "manc"
 DATA = Path(__file__).resolve().parent.parent / "data"
 LOGS = Path(__file__).resolve().parent.parent / "logs"
-
-# Load MN mapping
-with open(DATA / "mn_joint_mapping.json") as f:
-    mn_map = json.load(f)
-
 LEG_ORDER = ["LF", "LM", "LH", "RF", "RM", "RH"]
-mn_leg = {}
-mn_dir = {}
-mn_flex_ids = set()
-mn_ext_ids = set()
-for bid_str, entry in mn_map.items():
-    bid = int(bid_str)
-    leg = entry.get("leg", "LF")
-    if leg in LEG_ORDER:
-        mn_leg[bid] = LEG_ORDER.index(leg)
-    direction = float(entry.get("direction", 0.0))
-    if direction > 0:
-        mn_dir[bid] = "flex"
-        mn_flex_ids.add(bid)
-    elif direction < 0:
-        mn_dir[bid] = "ext"
-        mn_ext_ids.add(bid)
 
-all_mn_ids = mn_flex_ids | mn_ext_ids
-print(f"MNs: {len(mn_flex_ids)} flex, {len(mn_ext_ids)} ext")
+def load_mn_metadata():
+    with open(DATA / "mn_joint_mapping.json") as f:
+        mn_map = json.load(f)
 
-# Find half-center neurons from MANC
-print("Loading MANC data for half-center identification...")
-ann = pd.DataFrame(feather.read_feather(str(MANC / "body-annotations-male-cns-v0.9-minconf-0.5.feather")))
-nt_df = pd.DataFrame(feather.read_feather(str(MANC / "body-neurotransmitters-male-cns-v0.9.feather")))
-nt_unique = nt_df.drop_duplicates(subset="body", keep="first")
-nt_map = dict(zip(nt_unique["body"].values, nt_unique["consensus_nt"].values))
+    mn_leg = {}
+    mn_dir = {}
+    mn_flex_ids = set()
+    mn_ext_ids = set()
 
-int_mask = (ann["superclass"] == "vnc_intrinsic") & ann["somaNeuromere"].isin(["T1", "T2", "T3"])
-int_ids = set(ann.loc[int_mask, "bodyId"].astype(int))
+    for bid_str, entry in mn_map.items():
+        bid = int(bid_str)
+        leg = entry.get("leg", "LF")
+        if leg in LEG_ORDER:
+            mn_leg[bid] = LEG_ORDER.index(leg)
+        direction = float(entry.get("direction", 0.0))
+        if direction > 0:
+            mn_dir[bid] = "flex"
+            mn_flex_ids.add(bid)
+        elif direction < 0:
+            mn_dir[bid] = "ext"
+            mn_ext_ids.add(bid)
 
-conn = pd.DataFrame(feather.read_feather(str(MANC / "connectome-weights-male-cns-v0.9-minconf-0.5.feather")))
-
-pre_to_mn = conn[conn["body_post"].isin(all_mn_ids) & conn["body_pre"].isin(int_ids)]
-int_to_flex = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_flex_ids)]["body_pre"].unique())
-int_to_ext = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_ext_ids)]["body_pre"].unique())
-
-inh_int_ids = set()
-for bid in int_ids:
-    nt = nt_map.get(bid, "unclear")
-    if isinstance(nt, str) and nt.lower().strip() in ("gaba", "histamine"):
-        inh_int_ids.add(bid)
-
-flex_inh = int_to_flex & inh_int_ids
-ext_inh = int_to_ext & inh_int_ids
-print(f"Inhibitory premotor: {len(flex_inh)} flex-targeting, {len(ext_inh)} ext-targeting")
-
-recip_edges = conn[
-    (conn["body_pre"].isin(flex_inh) & conn["body_post"].isin(ext_inh)) |
-    (conn["body_pre"].isin(ext_inh) & conn["body_post"].isin(flex_inh))
-]
-hc_neurons = set(recip_edges["body_pre"].unique()) | set(recip_edges["body_post"].unique())
-print(f"Half-center neurons: {len(hc_neurons)}, reciprocal edges: {len(recip_edges)}")
-
-# Free large dataframes
-del conn, ann, nt_df
+    return mn_leg, mn_dir, mn_flex_ids, mn_ext_ids
 
 
-def run_experiment(name, b_adapt, tau_syn, I_tonic, inh_scale, hc_scale, hc_ids):
+def find_halfcenter_neurons(all_mn_ids, mn_flex_ids, mn_ext_ids):
+    print("Loading MANC data for half-center identification...")
+    ann = pd.DataFrame(feather.read_feather(str(MANC / "body-annotations-male-cns-v0.9-minconf-0.5.feather")))
+    nt_df = pd.DataFrame(feather.read_feather(str(MANC / "body-neurotransmitters-male-cns-v0.9.feather")))
+    nt_unique = nt_df.drop_duplicates(subset="body", keep="first")
+    nt_map = dict(zip(nt_unique["body"].values, nt_unique["consensus_nt"].values))
+
+    int_mask = (ann["superclass"] == "vnc_intrinsic") & ann["somaNeuromere"].isin(["T1", "T2", "T3"])
+    int_ids = set(ann.loc[int_mask, "bodyId"].astype(int))
+
+    conn = pd.DataFrame(feather.read_feather(str(MANC / "connectome-weights-male-cns-v0.9-minconf-0.5.feather")))
+    pre_to_mn = conn[conn["body_post"].isin(all_mn_ids) & conn["body_pre"].isin(int_ids)]
+    int_to_flex = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_flex_ids)]["body_pre"].unique())
+    int_to_ext = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_ext_ids)]["body_pre"].unique())
+
+    inh_int_ids = set()
+    for bid in int_ids:
+        nt = nt_map.get(bid, "unclear")
+        if isinstance(nt, str) and nt.lower().strip() in ("gaba", "histamine"):
+            inh_int_ids.add(bid)
+
+    flex_inh = int_to_flex & inh_int_ids
+    ext_inh = int_to_ext & inh_int_ids
+    print(f"Inhibitory premotor: {len(flex_inh)} flex-targeting, {len(ext_inh)} ext-targeting")
+
+    recip_edges = conn[
+        (conn["body_pre"].isin(flex_inh) & conn["body_post"].isin(ext_inh)) |
+        (conn["body_pre"].isin(ext_inh) & conn["body_post"].isin(flex_inh))
+    ]
+    hc_neurons = set(recip_edges["body_pre"].unique()) | set(recip_edges["body_post"].unique())
+    print(f"Half-center neurons: {len(hc_neurons)}, reciprocal edges: {len(recip_edges)}")
+    return hc_neurons
+
+
+def run_experiment(name, b_adapt, tau_syn, I_tonic, inh_scale, hc_scale, hc_ids, mn_leg, mn_dir):
     """Run one experiment with optional targeted half-center scaling."""
     print(f"\n  Building {name}...")
     cfg = MinimalVNCConfig(
@@ -200,34 +198,44 @@ def run_experiment(name, b_adapt, tau_syn, I_tonic, inh_scale, hc_scale, hc_ids)
             "osc_dom": mean_dom, "osc_freq": mean_freq}
 
 
-print("\n" + "=" * 60)
-print("TARGETED HALF-CENTER EXPERIMENTS")
-print("=" * 60)
+def main():
+    mn_leg, mn_dir, mn_flex_ids, mn_ext_ids = load_mn_metadata()
+    all_mn_ids = mn_flex_ids | mn_ext_ids
+    print(f"MNs: {len(mn_flex_ids)} flex, {len(mn_ext_ids)} ext")
+    hc_neurons = find_halfcenter_neurons(all_mn_ids, mn_flex_ids, mn_ext_ids)
 
-results = []
+    print("\n" + "=" * 60)
+    print("TARGETED HALF-CENTER EXPERIMENTS")
+    print("=" * 60)
 
-print("\n[1/5] Targeted HC 8x, I_tonic=3.0, b=5.0")
-results.append(run_experiment("HC_8x", 5.0, 20.0, 3.0, 1.5, 12.0, hc_neurons))
+    results = []
 
-print("\n[2/5] Starve: I_tonic=0.5, b=5.0")
-results.append(run_experiment("Starve", 5.0, 20.0, 0.5, 1.5, 1.5, set()))
+    print("\n[1/5] Targeted HC 8x, I_tonic=3.0, b=5.0")
+    results.append(run_experiment("HC_8x", 5.0, 20.0, 3.0, 1.5, 12.0, hc_neurons, mn_leg, mn_dir))
 
-print("\n[3/5] HC_8x + Starve: I_tonic=1.0, b=5.0")
-results.append(run_experiment("HC_8x+Starve", 5.0, 20.0, 1.0, 1.5, 12.0, hc_neurons))
+    print("\n[2/5] Starve: I_tonic=0.5, b=5.0")
+    results.append(run_experiment("Starve", 5.0, 20.0, 0.5, 1.5, 1.5, set(), mn_leg, mn_dir))
 
-print("\n[4/5] HC_20x + Starve: I_tonic=0.5, b=8.0")
-results.append(run_experiment("HC_20x+Starve", 8.0, 20.0, 0.5, 1.5, 30.0, hc_neurons))
+    print("\n[3/5] HC_8x + Starve: I_tonic=1.0, b=5.0")
+    results.append(run_experiment("HC_8x+Starve", 5.0, 20.0, 1.0, 1.5, 12.0, hc_neurons, mn_leg, mn_dir))
 
-print("\n[5/5] HC_8x + slow syn + Starve: tau=100ms, I_tonic=0.5")
-results.append(run_experiment("HC_8x+Slow+Starve", 5.0, 100.0, 0.5, 1.5, 12.0, hc_neurons))
+    print("\n[4/5] HC_20x + Starve: I_tonic=0.5, b=8.0")
+    results.append(run_experiment("HC_20x+Starve", 8.0, 20.0, 0.5, 1.5, 30.0, hc_neurons, mn_leg, mn_dir))
 
-print("\n" + "=" * 60)
-print("SUMMARY")
-print("=" * 60)
-for r in results:
-    alt = "ALT!" if r["fe_corr"] < -0.2 else "---"
-    tri = "TRI!" if r["tripod"] < -0.2 else "---"
-    print(f"  {r['name']:25s}: fe={r['fe_corr']:+.3f} {alt}  tri={r['tripod']:+.3f} {tri}")
+    print("\n[5/5] HC_8x + slow syn + Starve: tau=100ms, I_tonic=0.5")
+    results.append(run_experiment("HC_8x+Slow+Starve", 5.0, 100.0, 0.5, 1.5, 12.0, hc_neurons, mn_leg, mn_dir))
 
-_write_json_atomic(LOGS / "vnc_halfcenter_results.json", results)
-print(f"\nSaved to {LOGS / 'vnc_halfcenter_results.json'}")
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    for r in results:
+        alt = "ALT!" if r["fe_corr"] < -0.2 else "---"
+        tri = "TRI!" if r["tripod"] < -0.2 else "---"
+        print(f"  {r['name']:25s}: fe={r['fe_corr']:+.3f} {alt}  tri={r['tripod']:+.3f} {tri}")
+
+    _write_json_atomic(LOGS / "vnc_halfcenter_results.json", results)
+    print(f"\nSaved to {LOGS / 'vnc_halfcenter_results.json'}")
+
+
+if __name__ == "__main__":
+    main()

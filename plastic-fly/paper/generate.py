@@ -724,6 +724,19 @@ def build_paper():
         "and 19/20 with the full Brian2 brain. VNC-lite reduces command jitter by 47\u201397% "
         "compared to the original decoder while preserving all headline behavioral effects.")
 
+    pdf.bold_start_para("Representational geometry of population codes.",
+        "We recorded 365-dimensional DN population vectors during six sensory conditions "
+        "(baseline, bilateral contact loss, lateral push, looming, odor) and computed evoked "
+        "delta vectors (perturbation minus baseline per trial, 5 seeds). The intact connectome "
+        "activated 102 of 365 readout DNs with condition-dependent firing changes; the shuffled "
+        "connectome activated only 4 (25.5\u00d7 ratio). Logistic regression decoded sensory "
+        "condition at 36.9% accuracy (chance = 16.7%, 2.2\u00d7); shuffled achieved 10.0%. "
+        "Visual and olfactory conditions produced highly dissimilar patterns (1 \u2212 Pearson = "
+        "0.97). RSA comparing neural and structural (1-hop Jaccard) RDMs yielded r = \u22120.36, "
+        "indicating that multi-synaptic dynamics reshape the coding space relative to direct "
+        "connectivity. The connectome is necessary for structured representations but the "
+        "geometry is an emergent property of network dynamics.")
+
     pdf.bold_start_para("Topology learning: sparsity, not wiring, determines learning speed.",
         "Section 2.9 shows that random sparse networks match connectome performance on forward "
         "locomotion. This negative result strengthens rather than weakens our claims: the "

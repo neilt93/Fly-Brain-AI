@@ -48,6 +48,14 @@ Closed-loop FlyWire brain (138,639 neurons) + FlyGym body (v1.2.1)
 - Extended to 6 modalities (adding auditory, thermo, hygro): olfactory has zero DN overlap with all five others. Thermo-hygro converge on a single DN type (DNb05, 2 neurons) -- silencing DNb05 collapses thermo/hygro throughput (16.4x specificity) while preserving everything else.
 - Stance-controlling DNs receive zero visual or olfactory input at 1-hop -- exclusively somatosensory. This was not designed; it fell out of the connectome analysis.
 
+## 4:00-4:15 -- Population coding: representational geometry
+
+- The connectome creates structured population codes in the DN population.
+- 102 of 365 DNs respond differentially to sensory conditions; shuffled connectome: only 4 (25.5x ratio).
+- Linear decoding of sensory condition: 37% accuracy (2.2x chance); shuffled: 10% (below chance).
+- Visual and olfactory produce highly dissimilar DN patterns (dissimilarity 0.97) — separate labeled lines confirmed at the population level.
+- The representational geometry does NOT mirror 1-hop wiring (RSA r = -0.36) — multi-synaptic dynamics reshape the coding space. The connectome is necessary but the representation is emergent.
+
 ## 4:15-4:45 -- What this means
 
 - The FlyWire connectome carries enough functional information to produce stimulus-specific, causally validated sensorimotor behavior -- without learning, without neuromodulation, without synaptic tuning.
@@ -76,4 +84,8 @@ Closed-loop FlyWire brain (138,639 neurons) + FlyGym body (v1.2.1)
 | Looming escape | Escape index 1.11, 21x over shuffled |
 | DN segregation (Jaccard) | 0.005-0.060 (3 modalities) |
 | DNb05 specificity | 16.4x (thermo/hygro bottleneck) |
+| Responsive DNs (intact vs shuffled) | 102 vs 4 (25.5x) |
+| DN population decoding | 37% (chance 17%), shuffled 10% |
+| VNC neurons (MANC) | 13,101 (1.9M synapses) |
+| VNC forward ablation | -97% distance |
 | Shuffled controls | All effects wiring-specific |

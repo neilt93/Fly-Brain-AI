@@ -117,6 +117,8 @@ class FlyGymHexapod(HexapodInterface):
     def __init__(self, config=None, timestep=1e-4):
         super().__init__(config)
         self.timestep = timestep
+        self.command_dt_s = 1.0 / self.config.control_freq_hz
+        self.control_substeps = max(1, int(round(self.command_dt_s / self.timestep)))
         self.sim = None
         self.fly = None
         self._last_obs = None
@@ -138,8 +140,13 @@ class FlyGymHexapod(HexapodInterface):
         return self._last_obs
 
     def command(self, action: dict) -> BodyObservation:
-        raw_obs, _, term, trunc, _ = self.sim.step(action)
+        raw_obs = None
+        for _ in range(self.control_substeps):
+            raw_obs, _, term, trunc, _ = self.sim.step(action)
+            if term or trunc:
+                raise RuntimeError("FlyGym episode ended during hexapod command")
         self._step_count += 1
+        self._last_command_time = time.time()
         self._last_obs = self._convert_obs(raw_obs)
         return self._last_obs
 
@@ -160,15 +167,18 @@ class FlyGymHexapod(HexapodInterface):
             for i in range(6)
         ], dtype=np.float32)
 
-        fly_state = obs["fly"]
-        pos = np.array(fly_state[0])
+        fly_state = np.array(obs["fly"], dtype=np.float32)
+        pos = fly_state[0] if fly_state.ndim >= 2 and fly_state.shape[0] >= 1 else np.zeros(3, dtype=np.float32)
+        vel = fly_state[1] if fly_state.ndim >= 2 and fly_state.shape[0] >= 2 else np.zeros(3, dtype=np.float32)
+        orient = fly_state[2] if fly_state.ndim >= 2 and fly_state.shape[0] >= 3 else np.zeros(3, dtype=np.float32)
 
         return BodyObservation(
             joint_angles=joints[0].flatten().astype(np.float32) if joints.ndim >= 2 else joints.flatten().astype(np.float32),
-            joint_velocities=(joints[1].flatten() * 0.01).astype(np.float32) if joints.ndim >= 2 and joints.shape[0] >= 2 else np.zeros(42, dtype=np.float32),
+            joint_velocities=joints[1].flatten().astype(np.float32) if joints.ndim >= 2 and joints.shape[0] >= 2 else np.zeros(42, dtype=np.float32),
             contact_forces=per_leg,
-            body_velocity=np.zeros(3, dtype=np.float32),  # not directly available
-            body_orientation=pos,
+            body_velocity=vel.astype(np.float32),
+            body_orientation=orient.astype(np.float32),
+            body_position=pos.astype(np.float32),
         )
 
 
@@ -249,12 +259,15 @@ class HexArthHexapod(HexapodInterface):
     def observe(self) -> BodyObservation:
         # Read servo feedback: position, load, voltage
         feedback = self._read_servo_feedback()
+        body_position = feedback.get("body_position")
         return BodyObservation(
-            joint_angles=feedback["positions"],
-            joint_velocities=feedback["velocities"],
-            contact_forces=feedback["foot_pressure"],
-            body_velocity=feedback.get("imu_velocity", np.zeros(3)),
-            body_orientation=feedback.get("imu_orientation", np.zeros(3)),
+            joint_angles=np.asarray(feedback["positions"], dtype=np.float32),
+            joint_velocities=np.asarray(feedback["velocities"], dtype=np.float32),
+            contact_forces=np.asarray(feedback["foot_pressure"], dtype=np.float32),
+            body_velocity=np.asarray(feedback.get("imu_velocity", np.zeros(3)), dtype=np.float32),
+            body_orientation=np.asarray(feedback.get("imu_orientation", np.zeros(3)), dtype=np.float32),
+            body_position=(np.asarray(body_position, dtype=np.float32)
+                           if body_position is not None else None),
         )
 
     def close(self):

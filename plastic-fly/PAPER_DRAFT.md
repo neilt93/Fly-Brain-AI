@@ -20,7 +20,9 @@ Here we build such a system and make three contributions:
 
 3. **Modality-specific descending channels.** Analysis of the descending neurons functionally recruited by each behavior reveals a previously unreported structural principle: sensory modalities maintain near-complete segregation at the direct sensory-to-descending interface, converging only through a single interneuron layer. The connectome implements parallel labeled lines for multisensory motor control.
 
-4. **Topology vs. interpretability.** When we test whether connectome topology accelerates motor learning compared to random sparse networks of matched density, we find no advantage — sparsity alone determines learning speed. The connectome's value is not as an optimization prior but as an interpretable, causally traceable architecture: a documented circuit whose components can be selectively manipulated with predictable outcomes, unlike a random network of equivalent performance.
+4. **Structured population codes.** The intact connectome activates 25x more condition-responsive descending neurons than a shuffled control, and sensory conditions are linearly decodable from the DN population at 2.2x chance level — structure that vanishes when wiring is randomized.
+
+5. **Topology vs. interpretability.** When we test whether connectome topology accelerates motor learning compared to random sparse networks of matched density, we find no advantage — sparsity alone determines learning speed. The connectome's value is not as an optimization prior but as an interpretable, causally traceable architecture: a documented circuit whose components can be selectively manipulated with predictable outcomes, unlike a random network of equivalent performance.
 
 ---
 
@@ -228,7 +230,21 @@ Importantly, this direct pathway is not the only route for thermo/hygro informat
 
 Auditory lost 29.3% of its DN targets (12/41) and 25.5% of synapses. Visual lost 27.3% of DN targets (12/44) and 44.2% of synapses — nearly half of visual motor output passes through these shared turning DNs. Critically, the impact was turning-specific: auditory turn_right throughput dropped 35.1%, turn_left 16.5%, while forward, rhythm, and stance throughput remained at 0% loss. Olfactory was completely unaffected (0%), as were thermosensory and hygrosensory (0% each). All 8/8 causal tests passed across both experiments.
 
-### 2.9 Sparsity, not specific wiring, determines learning speed
+### 2.9 Representational geometry of connectome-constrained population codes
+
+The preceding sections established that the connectome produces specific behaviors and modality-specific descending channels. We next asked whether the connectome also creates structured neural representations — population-level coding patterns that organize by sensory modality and vanish when wiring is randomized.
+
+**Protocol.** We recorded full 365-dimensional DN population vectors during six sensory conditions spanning four modalities: baseline (proprioceptive), bilateral contact loss (mechanosensory), lateral push (vestibular), unilateral looming (visual/LPLC2), and unilateral odor (olfactory). For each condition, we computed evoked delta vectors (perturbation-phase mean minus pre-perturbation baseline per trial) to isolate condition-specific responses from common walking activity. Five seeds per condition, two brain types (intact vs shuffled connectome), yielding 30 trial-level delta vectors per brain type.
+
+**Responsive neurons.** The intact connectome activated 102 of 365 readout DNs with condition-dependent firing rate changes (non-zero variance across conditions). The shuffled connectome activated only 4 — a 25.5x ratio. This is the strongest single metric: the connectome's specific wiring creates modality-specific coding in 28% of the DN population, while degree-matched random wiring produces near-uniform responses.
+
+**Linear decodability.** Logistic regression with leave-one-group-out cross-validation decoded sensory condition from single-trial delta vectors at 36.9% accuracy (chance = 16.7%, 2.2x above chance). The shuffled connectome achieved only 10.0% (below chance), confirming that condition information in the DN population requires specific wiring. PCA captured 39.5% of variance in the top 3 components, with positive silhouette score (0.13), indicating modest but real cluster structure.
+
+**Cross-modal dissimilarity.** Visual (looming) and olfactory conditions produced highly dissimilar population patterns (1 - Pearson = 0.97), consistent with the near-zero Jaccard overlap between LPLC2 and olfactory DN targets at 1-hop. Contact loss left and right produced moderately similar patterns (Pearson = 0.50), reflecting their shared mechanosensory modality.
+
+**RSA.** Representational similarity analysis comparing the neural dissimilarity matrix to the structural (1-hop Jaccard) dissimilarity matrix yielded a negative correlation (Spearman r = -0.36), indicating that the geometry of neural representations does not directly mirror 1-hop wiring. This is expected: activity propagates through multiple synaptic hops and recurrent dynamics, reshaping the coding space relative to direct connectivity. The connectome is necessary for structured representations (25.5x responsive neuron ratio) but the representational geometry is an emergent property of network dynamics, not a simple readout of anatomy.
+
+### 2.10 Sparsity, not specific wiring, determines learning speed
 
 Sections 2.1-2.8 established that the connectome supports sensorimotor function without learning. A natural hypothesis is that connectome topology also provides a structural advantage when learning is required — that evolution-optimized wiring should accelerate motor learning compared to random networks. We tested this hypothesis directly and found it to be false: sparsity alone accounts for the learning advantage, independent of the specific wiring pattern.
 

@@ -49,32 +49,35 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 LOGS = Path(__file__).resolve().parent.parent / "logs" / "vnc_rhythm"
 MANC = DATA / "manc"
 
-with open(DATA / "mn_joint_mapping.json") as f:
-    mn_map = json.load(f)
-
 LEG_ORDER = ["LF", "LM", "LH", "RF", "RM", "RH"]
-mn_leg = {}
-mn_dir = {}
-mn_flex_ids = set()
-mn_ext_ids = set()
-for bid_str, entry in mn_map.items():
-    bid = int(bid_str)
-    leg = entry.get("leg", "LF")
-    if leg in LEG_ORDER:
-        mn_leg[bid] = LEG_ORDER.index(leg)
-    direction = float(entry.get("direction", 0.0))
-    if direction > 0:
-        mn_dir[bid] = "flex"
-        mn_flex_ids.add(bid)
-    elif direction < 0:
-        mn_dir[bid] = "ext"
-        mn_ext_ids.add(bid)
-
-all_mn_ids = mn_flex_ids | mn_ext_ids
-print(f"MNs: {len(mn_flex_ids)} flex, {len(mn_ext_ids)} ext, {len(all_mn_ids)} total")
 
 
-def analyze_output(runner, n_steps=150, sim_ms=20.0, label=""):
+def load_mn_metadata():
+    with open(DATA / "mn_joint_mapping.json") as f:
+        mn_map = json.load(f)
+
+    mn_leg = {}
+    mn_dir = {}
+    mn_flex_ids = set()
+    mn_ext_ids = set()
+
+    for bid_str, entry in mn_map.items():
+        bid = int(bid_str)
+        leg = entry.get("leg", "LF")
+        if leg in LEG_ORDER:
+            mn_leg[bid] = LEG_ORDER.index(leg)
+        direction = float(entry.get("direction", 0.0))
+        if direction > 0:
+            mn_dir[bid] = "flex"
+            mn_flex_ids.add(bid)
+        elif direction < 0:
+            mn_dir[bid] = "ext"
+            mn_ext_ids.add(bid)
+
+    return mn_leg, mn_dir, mn_flex_ids, mn_ext_ids
+
+
+def analyze_output(runner, mn_leg, mn_dir, n_steps=150, sim_ms=20.0, label=""):
     """Run VNC and analyze flex/ext correlation + oscillation."""
     group_rates = {
         "forward": 25.0, "turn_left": 5.0, "turn_right": 5.0,
@@ -159,55 +162,47 @@ def analyze_output(runner, n_steps=150, sim_ms=20.0, label=""):
     }
 
 
-# =========================================================================
-# Find half-center interneurons from MANC
-# =========================================================================
-print("\nLoading MANC data for half-center identification...")
 import pandas as pd
 import pyarrow.feather as feather
 
-ann = pd.DataFrame(feather.read_feather(str(MANC / "body-annotations-male-cns-v0.9-minconf-0.5.feather")))
-nt_df = pd.DataFrame(feather.read_feather(str(MANC / "body-neurotransmitters-male-cns-v0.9.feather")))
-nt_unique = nt_df.drop_duplicates(subset="body", keep="first")
-nt_map = dict(zip(nt_unique["body"].values, nt_unique["consensus_nt"].values))
-
-int_mask = (ann["superclass"] == "vnc_intrinsic") & ann["somaNeuromere"].isin(["T1", "T2", "T3"])
-int_ids = set(ann.loc[int_mask, "bodyId"].astype(int))
-
-conn = pd.DataFrame(feather.read_feather(str(MANC / "connectome-weights-male-cns-v0.9-minconf-0.5.feather")))
-pre_to_mn = conn[conn["body_post"].isin(all_mn_ids) & conn["body_pre"].isin(int_ids)]
-int_to_flex = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_flex_ids)]["body_pre"].unique())
-int_to_ext = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_ext_ids)]["body_pre"].unique())
-
-inh_int_ids = set()
-for bid in int_ids:
-    nt = nt_map.get(bid, "unclear")
-    if isinstance(nt, str) and nt.lower().strip() in ("gaba", "histamine"):
-        inh_int_ids.add(bid)
-
-flex_inh = int_to_flex & inh_int_ids
-ext_inh = int_to_ext & inh_int_ids
-print(f"Inhibitory premotor: {len(flex_inh)} flex-targeting, {len(ext_inh)} ext-targeting")
-
-# Reciprocally connected inhibitory pairs
-recip_edges = conn[
-    (conn["body_pre"].isin(flex_inh) & conn["body_post"].isin(ext_inh)) |
-    (conn["body_pre"].isin(ext_inh) & conn["body_post"].isin(flex_inh))
-]
-hc_neurons = set(recip_edges["body_pre"].unique()) | set(recip_edges["body_post"].unique())
-print(f"Half-center candidates: {len(hc_neurons)} neurons, {len(recip_edges)} reciprocal edges")
-
-del conn, ann, nt_df, nt_unique
-
-# =========================================================================
-# Experiment configurations
-# =========================================================================
 from bridge.vnc_minimal import MinimalVNCRunner, MinimalVNCConfig
 
-all_results = []
+
+def find_halfcenter_neurons(all_mn_ids, mn_flex_ids, mn_ext_ids):
+    print("\nLoading MANC data for half-center identification...")
+    ann = pd.DataFrame(feather.read_feather(str(MANC / "body-annotations-male-cns-v0.9-minconf-0.5.feather")))
+    nt_df = pd.DataFrame(feather.read_feather(str(MANC / "body-neurotransmitters-male-cns-v0.9.feather")))
+    nt_unique = nt_df.drop_duplicates(subset="body", keep="first")
+    nt_map = dict(zip(nt_unique["body"].values, nt_unique["consensus_nt"].values))
+
+    int_mask = (ann["superclass"] == "vnc_intrinsic") & ann["somaNeuromere"].isin(["T1", "T2", "T3"])
+    int_ids = set(ann.loc[int_mask, "bodyId"].astype(int))
+
+    conn = pd.DataFrame(feather.read_feather(str(MANC / "connectome-weights-male-cns-v0.9-minconf-0.5.feather")))
+    pre_to_mn = conn[conn["body_post"].isin(all_mn_ids) & conn["body_pre"].isin(int_ids)]
+    int_to_flex = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_flex_ids)]["body_pre"].unique())
+    int_to_ext = set(pre_to_mn[pre_to_mn["body_post"].isin(mn_ext_ids)]["body_pre"].unique())
+
+    inh_int_ids = set()
+    for bid in int_ids:
+        nt = nt_map.get(bid, "unclear")
+        if isinstance(nt, str) and nt.lower().strip() in ("gaba", "histamine"):
+            inh_int_ids.add(bid)
+
+    flex_inh = int_to_flex & inh_int_ids
+    ext_inh = int_to_ext & inh_int_ids
+    print(f"Inhibitory premotor: {len(flex_inh)} flex-targeting, {len(ext_inh)} ext-targeting")
+
+    recip_edges = conn[
+        (conn["body_pre"].isin(flex_inh) & conn["body_post"].isin(ext_inh)) |
+        (conn["body_pre"].isin(ext_inh) & conn["body_post"].isin(flex_inh))
+    ]
+    hc_neurons = set(recip_edges["body_pre"].unique()) | set(recip_edges["body_post"].unique())
+    print(f"Half-center candidates: {len(hc_neurons)} neurons, {len(recip_edges)} reciprocal edges")
+    return hc_neurons
 
 
-def build_and_modify(name, cfg_kwargs, hc_scale=1.0, std_tau_ms=0.0,
+def build_and_modify(name, cfg_kwargs, hc_neurons, hc_scale=1.0, std_tau_ms=0.0,
                      std_fraction=0.0, extra_adapt_b=0.0):
     """Build a MinimalVNC and optionally modify synapses for rhythm exploration."""
     from brian2 import mV as bmV, ms as bms
@@ -264,90 +259,86 @@ def build_and_modify(name, cfg_kwargs, hc_scale=1.0, std_tau_ms=0.0,
     return runner
 
 
-# =========================================================================
-# Run experiments
-# =========================================================================
-print("\n" + "="*60)
-print("VNC RHYTHM EXPLORATION")
-print("="*60)
+def main():
+    mn_leg, mn_dir, mn_flex_ids, mn_ext_ids = load_mn_metadata()
+    all_mn_ids = mn_flex_ids | mn_ext_ids
+    print(f"MNs: {len(mn_flex_ids)} flex, {len(mn_ext_ids)} ext, {len(all_mn_ids)} total")
+    hc_neurons = find_halfcenter_neurons(all_mn_ids, mn_flex_ids, mn_ext_ids)
+    all_results = []
 
-# --- Exp 1: Baseline (current parameters) ---
-r = build_and_modify("Baseline (current params)", {
-    "n_premotor": 500, "b_adapt_mV": 0.3, "I_tonic_mV": 3.0, "inh_scale": 1.5,
-})
-all_results.append(analyze_output(r, label="baseline"))
+    print("\n" + "=" * 60)
+    print("VNC RHYTHM EXPLORATION")
+    print("=" * 60)
 
-# --- Exp 2: Strong adaptation (b=5mV) ---
-r = build_and_modify("Strong adaptation (b=5mV)", {
-    "n_premotor": 500, "b_adapt_mV": 5.0, "I_tonic_mV": 3.0, "inh_scale": 1.5,
-})
-all_results.append(analyze_output(r, label="strong_adapt"))
+    r = build_and_modify("Baseline (current params)", {
+        "n_premotor": 500, "b_adapt_mV": 0.3, "I_tonic_mV": 3.0, "inh_scale": 1.5,
+    }, hc_neurons)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="baseline"))
 
-# --- Exp 3: Very strong adaptation (b=10mV) + HC 8x ---
-r = build_and_modify("Very strong adapt (b=10) + HC 8x", {
-    "n_premotor": 500, "b_adapt_mV": 10.0, "I_tonic_mV": 2.0, "inh_scale": 1.5,
-}, hc_scale=8.0)
-all_results.append(analyze_output(r, label="very_strong_adapt_hc8x"))
+    r = build_and_modify("Strong adaptation (b=5mV)", {
+        "n_premotor": 500, "b_adapt_mV": 5.0, "I_tonic_mV": 3.0, "inh_scale": 1.5,
+    }, hc_neurons)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="strong_adapt"))
 
-# --- Exp 4: Strong adapt + HC 20x + low tonic ---
-r = build_and_modify("Strong adapt + HC 20x + low tonic", {
-    "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 1.0, "inh_scale": 1.5,
-}, hc_scale=20.0)
-all_results.append(analyze_output(r, label="adapt_hc20x_low"))
+    r = build_and_modify("Very strong adapt (b=10) + HC 8x", {
+        "n_premotor": 500, "b_adapt_mV": 10.0, "I_tonic_mV": 2.0, "inh_scale": 1.5,
+    }, hc_neurons, hc_scale=8.0)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="very_strong_adapt_hc8x"))
 
-# --- Exp 5: Extreme adapt (b=15) + HC 30x + starvation ---
-r = build_and_modify("Extreme adapt + HC 30x + starvation", {
-    "n_premotor": 500, "b_adapt_mV": 15.0, "I_tonic_mV": 0.5, "inh_scale": 1.5,
-}, hc_scale=30.0)
-all_results.append(analyze_output(r, label="extreme_adapt_hc30x"))
+    r = build_and_modify("Strong adapt + HC 20x + low tonic", {
+        "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 1.0, "inh_scale": 1.5,
+    }, hc_neurons, hc_scale=20.0)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="adapt_hc20x_low"))
 
-# --- Exp 6: Strong adapt + global inh 3x (not just HC) ---
-r = build_and_modify("Strong adapt + global inh 3x", {
-    "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 2.0, "inh_scale": 4.5,
-})
-all_results.append(analyze_output(r, label="global_inh_3x"))
+    r = build_and_modify("Extreme adapt + HC 30x + starvation", {
+        "n_premotor": 500, "b_adapt_mV": 15.0, "I_tonic_mV": 0.5, "inh_scale": 1.5,
+    }, hc_neurons, hc_scale=30.0)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="extreme_adapt_hc30x"))
 
-# --- Exp 7: Strong adapt + HC 15x + slow adapt tau ---
-r = build_and_modify("Strong adapt + HC 15x + slow tau_a", {
-    "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 1.5, "inh_scale": 1.5,
-    "tau_adapt_ms": 300.0,  # slower adaptation recovery
-}, hc_scale=15.0)
-all_results.append(analyze_output(r, label="slow_adapt_hc15x"))
+    r = build_and_modify("Strong adapt + global inh 3x", {
+        "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 2.0, "inh_scale": 4.5,
+    }, hc_neurons)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="global_inh_3x"))
 
-# --- Exp 8: Very low tonic + very strong HC + moderate adapt ---
-r = build_and_modify("Near-threshold + HC 50x + moderate adapt", {
-    "n_premotor": 500, "b_adapt_mV": 5.0, "I_tonic_mV": 0.3, "inh_scale": 1.5,
-}, hc_scale=50.0)
-all_results.append(analyze_output(r, label="near_thresh_hc50x"))
+    r = build_and_modify("Strong adapt + HC 15x + slow tau_a", {
+        "n_premotor": 500, "b_adapt_mV": 8.0, "I_tonic_mV": 1.5, "inh_scale": 1.5,
+        "tau_adapt_ms": 300.0,
+    }, hc_neurons, hc_scale=15.0)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="slow_adapt_hc15x"))
 
+    r = build_and_modify("Near-threshold + HC 50x + moderate adapt", {
+        "n_premotor": 500, "b_adapt_mV": 5.0, "I_tonic_mV": 0.3, "inh_scale": 1.5,
+    }, hc_neurons, hc_scale=50.0)
+    all_results.append(analyze_output(r, mn_leg, mn_dir, label="near_thresh_hc50x"))
 
-# =========================================================================
-# Summary
-# =========================================================================
-print("\n" + "="*60)
-print("RHYTHM EXPLORATION SUMMARY")
-print("="*60)
-print(f"{'Experiment':<35s} {'FE corr':>8s} {'Tripod':>8s} {'Osc dom':>8s} {'Freq':>6s} {'Verdict':>10s}")
-print("-" * 80)
-for r in all_results:
-    verdict = "ALT!" if r["fe_corr"] < -0.3 else ("weak" if r["fe_corr"] < 0.0 else "FAIL")
-    print(f"{r['label']:<35s} {r['fe_corr']:>+7.3f} {r['tripod']:>+7.3f} "
-          f"{r['osc_dom']:>7.2f} {r['osc_freq']:>5.1f}Hz {verdict:>10s}")
-
-n_alt = sum(1 for r in all_results if r["fe_corr"] < -0.3)
-n_weak = sum(1 for r in all_results if -0.3 <= r["fe_corr"] < 0.0)
-print(f"\nAlternation: {n_alt} strong, {n_weak} weak, {len(all_results)-n_alt-n_weak} fail")
-
-if n_alt == 0:
-    print("\nConclusion: LIF + adaptation + scaled mutual inhibition CANNOT produce")
-    print("flex/ext alternation from MANC wiring. Rhythm generation likely requires")
-    print("conductance-based neuron models (persistent Na+, Ca2+) or neuromodulatory")
-    print("state changes not captured by LIF dynamics.")
-else:
-    print(f"\nAlternation FOUND in {n_alt} configurations!")
+    print("\n" + "=" * 60)
+    print("RHYTHM EXPLORATION SUMMARY")
+    print("=" * 60)
+    print(f"{'Experiment':<35s} {'FE corr':>8s} {'Tripod':>8s} {'Osc dom':>8s} {'Freq':>6s} {'Verdict':>10s}")
+    print("-" * 80)
     for r in all_results:
-        if r["fe_corr"] < -0.3:
-            print(f"  {r['label']}: fe_corr={r['fe_corr']:+.3f}")
+        verdict = "ALT!" if r["fe_corr"] < -0.3 else ("weak" if r["fe_corr"] < 0.0 else "FAIL")
+        print(f"{r['label']:<35s} {r['fe_corr']:>+7.3f} {r['tripod']:>+7.3f} "
+              f"{r['osc_dom']:>7.2f} {r['osc_freq']:>5.1f}Hz {verdict:>10s}")
 
-_write_json_atomic(LOGS / "rhythm_exploration.json", all_results)
-print(f"\nSaved to {LOGS / 'rhythm_exploration.json'}")
+    n_alt = sum(1 for r in all_results if r["fe_corr"] < -0.3)
+    n_weak = sum(1 for r in all_results if -0.3 <= r["fe_corr"] < 0.0)
+    print(f"\nAlternation: {n_alt} strong, {n_weak} weak, {len(all_results) - n_alt - n_weak} fail")
+
+    if n_alt == 0:
+        print("\nConclusion: LIF + adaptation + scaled mutual inhibition CANNOT produce")
+        print("flex/ext alternation from MANC wiring. Rhythm generation likely requires")
+        print("conductance-based neuron models (persistent Na+, Ca2+) or neuromodulatory")
+        print("state changes not captured by LIF dynamics.")
+    else:
+        print(f"\nAlternation FOUND in {n_alt} configurations!")
+        for r in all_results:
+            if r["fe_corr"] < -0.3:
+                print(f"  {r['label']}: fe_corr={r['fe_corr']:+.3f}")
+
+    _write_json_atomic(LOGS / "rhythm_exploration.json", all_results)
+    print(f"\nSaved to {LOGS / 'rhythm_exploration.json'}")
+
+
+if __name__ == "__main__":
+    main()

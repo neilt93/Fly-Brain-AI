@@ -475,10 +475,10 @@ def load_policy(arch, seed, topo, cfg):
         "connectome": lambda: build_connectome_policy(
             topo, cfg.obs_dim, cfg.act_dim, cfg.recurrence_steps, _JOINT_PARAMS),
         "random_sparse": lambda: build_random_sparse_policy(
-            topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+            topo, seed=seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
             recurrence_steps=cfg.recurrence_steps, joint_params=_JOINT_PARAMS),
         "shuffled": lambda: build_shuffled_policy(
-            topo, seed=99, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
+            topo, seed=seed, obs_dim=cfg.obs_dim, act_dim=cfg.act_dim,
             recurrence_steps=cfg.recurrence_steps, joint_params=_JOINT_PARAMS),
     }
 
@@ -617,6 +617,8 @@ def main():
     parser.add_argument("--n-sample", type=int, default=100,
                         help="Neurons to sample for single-neuron ablation")
     parser.add_argument("--n-episodes", type=int, default=2)
+    parser.add_argument("--connectome", choices=["flywire", "banc"], default="flywire",
+                        help="Connectome dataset")
     args = parser.parse_args()
 
     if args.quick:
