@@ -96,6 +96,12 @@ class VNCConfig:
     # Pugliese CPG: replace sine rhythm with connectome-derived oscillator
     use_cpg: bool = False          # Use PuglieseCPG instead of sine
 
+    # VNC-coupled rhythm: let Brian2 MN balance influence oscillation timing.
+    # 0.0 = pure sine/CPG (no VNC influence on timing, backward compat)
+    # 0.3 = moderate coupling (VNC shifts phase, proprioception can affect gait)
+    # 1.0 = strong coupling (VNC dominates timing)
+    rhythm_coupling: float = 0.0
+
     # Synapse parameters
     w_syn_mV: float = 0.275         # Base synaptic weight (mV per synapse)
     w_input_scale: float = 250.0    # Weight multiplier for DN PoissonGroup input

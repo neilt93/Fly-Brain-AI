@@ -45,6 +45,70 @@ _TRIPOD_PHASES = np.array([0, np.pi, 0, np.pi, 0, np.pi])
 _CPG_WEIGHTS_PATH = DATA_DIR / "cpg_weights.json"
 
 
+class _VNCPhaseOscillator:
+    """Per-leg phase oscillator coupled to Brian2 VNC MN balance.
+
+    Each leg maintains an independent phase θ ∈ [0, 2π) that advances
+    at a base rate modulated by the VNC extensor/flexor balance:
+
+        dθ/dt = ω * (1 + κ * balance * sin(θ))
+
+    This creates asymmetric phase durations:
+      - balance > 0 (extensors dominate → VNC wants stance):
+        stance phase is longer, swing is shorter
+      - balance < 0 (flexors dominate → VNC wants swing):
+        swing phase is longer, stance is shorter
+      - balance ≈ 0: symmetric oscillation at base frequency
+
+    The coupling allows proprioceptive feedback to influence gait timing
+    through the VNC circuit: body state → sensory neurons → VNC
+    interneurons → MN balance shift → phase shift.
+    """
+
+    def __init__(self, n_legs: int = 6, base_freq_hz: float = 12.0,
+                 coupling: float = 0.3):
+        self.n_legs = n_legs
+        self.omega = 2.0 * np.pi * base_freq_hz
+        self.coupling = coupling
+        self.phase = np.zeros(n_legs, dtype=np.float64)
+        self.balance = np.zeros(n_legs, dtype=np.float64)
+        self._init_tripod()
+
+    def _init_tripod(self):
+        """Initialize with standard tripod phase offsets."""
+        self.phase[:] = _TRIPOD_PHASES[:self.n_legs]
+
+    def set_balance(self, balances: np.ndarray):
+        """Update per-leg extensor/flexor balance from Brian2 MN output.
+
+        Args:
+            balances: (n_legs,) in [-1, 1].
+                >0 = extensors dominate, VNC wants longer stance.
+                <0 = flexors dominate, VNC wants longer swing.
+        """
+        self.balance[:] = np.clip(balances, -1.0, 1.0)
+
+    def step(self, dt_s: float):
+        """Advance all leg phases by one body timestep."""
+        for leg in range(self.n_legs):
+            # Phase-dependent coupling: sin(θ) > 0 during swing, < 0 in stance.
+            # When balance > 0 and in swing (sin > 0): speed up → exit swing faster
+            # When balance > 0 and in stance (sin < 0): slow down → stay in stance
+            coupling_term = self.coupling * self.balance[leg] * np.sin(self.phase[leg])
+            phase_vel = self.omega * (1.0 + coupling_term)
+            # Clamp to prevent reversal or stall
+            phase_vel = max(phase_vel, self.omega * 0.2)
+            self.phase[leg] = (self.phase[leg] + phase_vel * dt_s) % (2.0 * np.pi)
+
+    def get_osc(self, leg_idx: int) -> float:
+        """Get oscillator signal in [-1, 1] for rhythm modulation."""
+        return float(np.sin(self.phase[leg_idx]))
+
+    def reset(self):
+        self._init_tripod()
+        self.balance[:] = 0.0
+
+
 class VNCBridge:
     """VNC connectome bridge: DN group rates -> real VNC -> joint angles.
 
@@ -132,6 +196,16 @@ class VNCBridge:
                 )
             except Exception as e:
                 print(f"  VNCBridge: proprioceptive encoder not available: {e}")
+
+        # VNC-coupled phase oscillator: lets Brian2 MN balance influence timing
+        coupling = self._vnc_cfg.rhythm_coupling if self._vnc_cfg else 0.0
+        self._phase_osc: _VNCPhaseOscillator | None = None
+        if self._is_brian2 and coupling > 0 and self._rhythm_map:
+            freq = self._vnc_cfg.rhythm_freq_hz
+            self._phase_osc = _VNCPhaseOscillator(
+                n_legs=6, base_freq_hz=freq, coupling=coupling,
+            )
+            print(f"  VNCBridge: VNC-coupled rhythm (k={coupling}, base={freq}Hz)")
 
     def _apply_cpg_rhythm(
         self,
@@ -266,6 +340,110 @@ class VNCBridge:
             firing_rates_hz=rates,
         )
 
+    def _compute_leg_balances(self, tonic_output: VNCOutput) -> np.ndarray:
+        """Compute per-leg extensor/flexor balance from Brian2 tonic MN rates.
+
+        For each leg: balance = (mean_ext - mean_flex) / (mean_ext + mean_flex).
+        Positive = extensors dominate (VNC wants stance).
+        Negative = flexors dominate (VNC wants swing).
+
+        Returns: (6,) array in [-1, 1].
+        """
+        ext_sum = np.zeros(6, dtype=np.float64)
+        ext_cnt = np.zeros(6, dtype=np.float64)
+        flex_sum = np.zeros(6, dtype=np.float64)
+        flex_cnt = np.zeros(6, dtype=np.float64)
+
+        mn_ids = tonic_output.mn_body_ids
+        rates = tonic_output.firing_rates_hz
+
+        for j in range(len(mn_ids)):
+            bid = int(mn_ids[j])
+            if bid in self._rhythm_map:
+                ru = self._rhythm_map[bid]
+                leg = ru // 2
+                rate = float(rates[j])
+                if (ru % 2) == 0:  # extensor
+                    ext_sum[leg] += rate
+                    ext_cnt[leg] += 1
+                else:              # flexor
+                    flex_sum[leg] += rate
+                    flex_cnt[leg] += 1
+
+        balances = np.zeros(6, dtype=np.float64)
+        for leg in range(6):
+            e = ext_sum[leg] / max(ext_cnt[leg], 1.0)
+            f = flex_sum[leg] / max(flex_cnt[leg], 1.0)
+            total = e + f
+            if total > 1.0:
+                balances[leg] = (e - f) / total
+        return balances
+
+    def _apply_rhythm_coupled(
+        self,
+        tonic_output: VNCOutput,
+        group_rates: dict,
+        dt_s: float,
+    ) -> VNCOutput:
+        """Apply VNC-coupled rhythm modulation.
+
+        Uses a phase oscillator whose timing is influenced by the Brian2 MN
+        extensor/flexor balance. When proprioceptive feedback changes VNC
+        interneuron activity, the MN balance shifts, and the rhythm phase
+        adjusts accordingly.
+
+        Same output structure as _apply_rhythm_sine, but osc comes from the
+        coupled phase oscillator instead of a fixed sin(2πft).
+        """
+        cfg = self._vnc_cfg
+
+        # Advance phase oscillator (balance was set in step_brain)
+        self._phase_osc.step(dt_s)
+
+        fwd_rate = float(group_rates.get("forward", 0.0))
+        amp_scale = float(np.clip(np.tanh(fwd_rate / 20.0), 0.1, 1.0))
+
+        turn_l = float(group_rates.get("turn_left", 0.0))
+        turn_r = float(group_rates.get("turn_right", 0.0))
+        asym_l = float(np.clip(1.0 - np.tanh(turn_l / 40.0) * 0.5, 0.3, 1.0))
+        asym_r = float(np.clip(1.0 - np.tanh(turn_r / 40.0) * 0.5, 0.3, 1.0))
+
+        tonic = tonic_output.firing_rates_hz
+        mn_ids = tonic_output.mn_body_ids
+        n_mn = len(mn_ids)
+        depth = cfg.rhythm_depth
+        gain_norm_hz = 30.0
+
+        rates = np.zeros(n_mn, dtype=np.float32)
+        for j in range(n_mn):
+            bid = int(mn_ids[j])
+            base = float(tonic[j])
+
+            if bid in self._rhythm_map:
+                ru = self._rhythm_map[bid]
+                leg_idx = ru // 2
+                is_ext = (ru % 2) == 0
+
+                # Oscillator signal from VNC-coupled phase
+                osc = self._phase_osc.get_osc(leg_idx)
+
+                if is_ext:
+                    mod = max(0.0, 0.5 - 0.5 * osc)
+                else:
+                    mod = max(0.0, 0.5 + 0.5 * osc)
+
+                gain = 0.5 + 0.5 * min(base / gain_norm_hz, 1.0)
+                side_scale = asym_l if leg_idx < 3 else asym_r
+
+                rates[j] = float(
+                    cfg.rhythm_base_hz * gain * amp_scale * side_scale
+                    * ((1.0 - depth) + depth * mod)
+                )
+            else:
+                rates[j] = base
+
+        return VNCOutput(mn_body_ids=mn_ids.copy(), firing_rates_hz=rates)
+
     def step(
         self,
         group_rates: dict,
@@ -304,7 +482,13 @@ class VNCBridge:
                 self._cached_group_rates = group_rates
 
             # Apply rhythm at body-step resolution
-            if self.use_cpg and self._cpg is not None:
+            if self._phase_osc is not None:
+                modulated = self._apply_rhythm_coupled(
+                    self._cached_tonic_output,
+                    self._cached_group_rates,
+                    dt_s,
+                )
+            elif self.use_cpg and self._cpg is not None:
                 modulated = self._apply_cpg_rhythm(
                     self._cached_tonic_output,
                     self._cached_group_rates,
@@ -366,6 +550,11 @@ class VNCBridge:
         self._cached_tonic_output = vnc_output
         self._cached_group_rates = group_rates
 
+        # Update phase oscillator coupling from VNC MN balance
+        if self._phase_osc is not None:
+            balances = self._compute_leg_balances(vnc_output)
+            self._phase_osc.set_balance(balances)
+
     def reset(self, init_angles: np.ndarray = None):
         """Reset MN decoder smoothing state."""
         self.mn_decoder.reset(init_angles=init_angles)
@@ -375,6 +564,8 @@ class VNCBridge:
         self._body_time_ms = 0.0
         if self._cpg is not None:
             self._cpg.reset()
+        if self._phase_osc is not None:
+            self._phase_osc.reset()
 
     @property
     def current_time_ms(self) -> float:
@@ -382,7 +573,12 @@ class VNCBridge:
 
     def summary(self) -> str:
         """Return diagnostic summary."""
-        rhythm_type = "CPG (Pugliese)" if self.use_cpg else "sine"
+        if self._phase_osc is not None:
+            rhythm_type = f"VNC-coupled (κ={self._phase_osc.coupling})"
+        elif self.use_cpg:
+            rhythm_type = "CPG (Pugliese)"
+        else:
+            rhythm_type = "sine"
         mode = "FakeVNC (per-step)" if self.use_fake else f"Brian2 VNC (cached+{rhythm_type})"
         lines = [
             f"VNCBridge: {type(self.vnc).__name__} ({mode})",
