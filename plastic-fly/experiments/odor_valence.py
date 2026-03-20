@@ -48,7 +48,16 @@ def _write_json_atomic(path: Path, payload: dict):
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     with open(tmp_path, "w") as f:
         json.dump(payload, f, indent=2)
-    tmp_path.replace(path)
+    for _attempt in range(5):
+        try:
+            tmp_path.replace(path)
+            break
+        except PermissionError:
+            if _attempt < 4:
+                import time; time.sleep(0.05 * (_attempt + 1))
+            else:
+                import shutil; shutil.copy2(str(tmp_path), str(path))
+                tmp_path.unlink(missing_ok=True)
 
 
 def _save_trial_checkpoint(

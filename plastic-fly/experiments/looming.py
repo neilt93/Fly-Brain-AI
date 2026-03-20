@@ -42,13 +42,36 @@ from bridge.flygym_adapter import FlyGymAdapter
 from analysis.behavior_metrics import compute_behavior
 
 
+def _json_default(obj):
+    """Handle numpy types for JSON serialization."""
+    import numpy as _np
+    if isinstance(obj, _np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (_np.integer, _np.floating, _np.bool_, _np.generic)):
+        return obj.item()
+    if hasattr(obj, "item"):
+        return obj.item()
+    if hasattr(obj, "tolist"):
+        return obj.tolist()
+    return str(obj)
+
+
 def _write_json_atomic(path: Path, payload: dict):
     """Write JSON atomically so checkpoints stay readable if the run is interrupted."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     with open(tmp_path, "w") as f:
-        json.dump(payload, f, indent=2)
-    tmp_path.replace(path)
+        json.dump(payload, f, indent=2, default=_json_default)
+    for _attempt in range(5):
+        try:
+            tmp_path.replace(path)
+            break
+        except PermissionError:
+            if _attempt < 4:
+                import time; time.sleep(0.05 * (_attempt + 1))
+            else:
+                import shutil; shutil.copy2(str(tmp_path), str(path))
+                tmp_path.unlink(missing_ok=True)
 
 
 def _record_frame(obs, positions, orientations, contact_forces_log):

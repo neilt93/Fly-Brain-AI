@@ -57,7 +57,16 @@ def _write_json_atomic(path: Path, payload: dict):
     with open(tmp_path, "w") as f:
         json.dump(payload, f, indent=2)
     try:
-        tmp_path.replace(path)
+        for _attempt in range(5):
+            try:
+                tmp_path.replace(path)
+                break
+            except PermissionError:
+                if _attempt < 4:
+                    import time; time.sleep(0.05 * (_attempt + 1))
+                else:
+                    import shutil; shutil.copy2(str(tmp_path), str(path))
+                    tmp_path.unlink(missing_ok=True)
     except PermissionError:
         # Windows: target file may be locked; fall back to remove-then-rename
         try:

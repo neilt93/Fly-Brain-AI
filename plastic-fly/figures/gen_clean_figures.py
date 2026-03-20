@@ -26,6 +26,10 @@ def fig_topology_learning():
                     curves[(arch, seed)] = d['curve']
             except FileNotFoundError:
                 pass
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"WARNING: Skipping corrupt/incomplete checkpoint {ckpt.name}: {e}")
+                print(f"  Re-run the topology learning experiment for arch={arch} seed={seed}")
+                pass
 
     colors = {'connectome': '#2ca02c', 'random_sparse': '#ff7f0e', 'shuffled': '#d62728'}
     labels = {'connectome': 'Connectome (MANC)', 'random_sparse': 'Random Sparse',
