@@ -444,6 +444,67 @@ class FiringRateVNCBridge:
             firing_rates_hz=rates.astype(np.float32),
         )
 
+    def _apply_proprioceptive_feedback(self, vnc_output: VNCOutput,
+                                        body_obs) -> VNCOutput:
+        """Modulate MN rates based on ground contact (proprioceptive feedback).
+
+        When a leg is in ground contact (stance phase):
+          - Boost extensor MNs (maintain weight-bearing)
+          - Suppress flexor MNs (don't lift during stance)
+        When a leg is lifted (swing phase):
+          - Boost flexor MNs (drive swing)
+          - Suppress extensor MNs (allow folding)
+
+        This mimics the campaniform sensilla -> premotor -> MN pathway
+        that provides load-dependent reflexes in real Drosophila.
+        """
+        if body_obs is None:
+            return vnc_output
+
+        # Extract ground contact from body observation
+        contacts = None
+        if hasattr(body_obs, 'contact_forces'):
+            cf = body_obs.contact_forces
+            if cf is not None and hasattr(cf, '__len__') and len(cf) >= 6:
+                contacts = np.array([float(cf[i]) > 0.01 for i in range(6)])
+        elif hasattr(body_obs, 'fly_orientation'):
+            # Try to get from raw obs dict
+            pass
+
+        if contacts is None:
+            return vnc_output
+
+        mn_ids = vnc_output.mn_body_ids
+        rates = vnc_output.firing_rates_hz.copy()
+        # NOTE: gains > 1.0 reduce walking distance because contact-based
+        # feedback conflicts with VNC rhythm phase. Needs phase-aligned
+        # implementation (detect leg liftoff, not continuous contact modulation).
+        _proprio_gain = 1.0  # disabled by default (1.0 = no effect)
+
+        for j in range(len(mn_ids)):
+            bid = int(mn_ids[j])
+            if bid not in self._mn_rhythm_map:
+                continue
+            ru = self._mn_rhythm_map[bid]
+            leg_idx = ru // 2
+            is_ext = (ru % 2) == 0
+            in_contact = contacts[leg_idx] if leg_idx < len(contacts) else False
+
+            if in_contact:
+                # Stance: boost extensors, suppress flexors
+                if is_ext:
+                    rates[j] *= _proprio_gain
+                else:
+                    rates[j] /= _proprio_gain
+            else:
+                # Swing: boost flexors, suppress extensors
+                if not is_ext:
+                    rates[j] *= _proprio_gain
+                else:
+                    rates[j] /= _proprio_gain
+
+        return VNCOutput(mn_body_ids=mn_ids.copy(), firing_rates_hz=rates)
+
     def _update_antiphase_quality(self):
         """Estimate per-leg anti-phase quality from recent flex/ext history.
 
@@ -628,6 +689,9 @@ class FiringRateVNCBridge:
 
         # Apply fallback rhythm for legs with poor alternation
         vnc_output = self._apply_fallback_rhythm(vnc_output, dt_s)
+
+        # Apply proprioceptive feedback (ground contact -> stance/swing modulation)
+        vnc_output = self._apply_proprioceptive_feedback(vnc_output, body_obs)
 
         # Decode MN rates to joint angles
         action = self.mn_decoder.decode(
