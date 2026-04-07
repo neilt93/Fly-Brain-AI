@@ -550,8 +550,6 @@ class FiringRateVNCRunner:
         Premotor = VNC intrinsic neurons in the selected segments that synapse
         onto leg MNs with at least min_mn_synapses synapses.
         """
-        import pandas as pd
-
         ann = self._ann
         segs = list(self.cfg.segments)
 
@@ -1065,8 +1063,6 @@ class FiringRateVNCRunner:
 
     def _build_dn_type_map(self):
         """Build DN type name -> list of model indices for targeted stimulation."""
-        import pandas as pd
-
         self._dn_type_to_indices: Dict[str, List[int]] = {}
         self._dn_type_to_body_ids: Dict[str, List[int]] = {}
 
@@ -1364,8 +1360,6 @@ class FiringRateVNCRunner:
 # ============================================================================
 
 if __name__ == "__main__":
-    import sys
-
     print("=" * 72)
     print("Pugliese-style Firing Rate VNC Model -- Validation")
     print("=" * 72)

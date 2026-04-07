@@ -34,7 +34,7 @@ Usage:
 
 import numpy as np
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 from bridge.vnc_firing_rate import (
     FiringRateVNCRunner,
@@ -347,7 +347,6 @@ class FiringRateVNCBridge:
         without lateralization, both turn commands activate the same neurons.
         """
         dn_type_map = self.vnc._dn_type_to_indices  # type -> [model_idx]
-        dn_type_bids = self.vnc._dn_type_to_body_ids  # type -> [body_id]
 
         # Build side lookup: model_idx -> "left"/"right"/""
         idx_side = {}
@@ -624,9 +623,8 @@ class FiringRateVNCBridge:
         Same-group legs should be in-phase (r > 0), cross-group anti-phase (r < 0).
         Score = (mean_same - mean_cross) / 2, range [-1, +1], 1 = perfect tripod.
         """
-        LEG = ["LF", "LM", "LH", "RF", "RM", "RH"]
+        _LEG = ["LF", "LM", "LH", "RF", "RM", "RH"]
         A = [0, 4, 5]  # LF, RM, RH
-        B = [3, 1, 2]  # RF, LM, LH
 
         # Use extensor rate history
         traces = []
@@ -645,7 +643,7 @@ class FiringRateVNCBridge:
                 r = _corr(traces[i], traces[j])
                 if r is None:
                     continue
-                key = f"{LEG[i]}-{LEG[j]}"
+                key = f"{_LEG[i]}-{_LEG[j]}"
                 pairs[key] = r
                 if (i in A) == (j in A):
                     same.append(r)
