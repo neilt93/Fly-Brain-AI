@@ -193,6 +193,12 @@ class MotorNeuronDecoder:
         alpha: float = 0.4,
     ):
         path = Path(mapping_path) if mapping_path else _DEFAULT_MAPPING
+        if not path.exists():
+            raise FileNotFoundError(
+                f"MN-joint mapping file not found: {path}\n"
+                "This file maps MANC motor neurons to FlyGym joints.\n"
+                "Expected at: data/mn_joint_mapping.json"
+            )
         with open(path) as f:
             raw: dict = json.load(f)
 
@@ -521,6 +527,11 @@ def load_mapping_dataframe():
     """
     import pandas as pd
 
+    if not _DEFAULT_MAPPING.exists():
+        raise FileNotFoundError(
+            f"MN-joint mapping file not found: {_DEFAULT_MAPPING}\n"
+            "Expected at: data/mn_joint_mapping.json"
+        )
     with open(_DEFAULT_MAPPING) as f:
         raw = json.load(f)
 

@@ -27,7 +27,7 @@ import numpy as np
 import torch
 from pathlib import Path
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -289,8 +289,8 @@ def compute_graph_modularity(policy):
         B_sparse = csr_matrix(B)
         eigenvalues, eigenvectors = eigsh(B_sparse, k=1, which="LA")
         s = np.sign(eigenvectors[:, 0])
-    except Exception:
-        # Fallback: random partition
+    except (ImportError, ArithmeticError, RuntimeError):
+        # Fallback: random partition if eigsh unavailable or fails to converge
         s = np.ones(n)
         s[:n//2] = -1.0
 
@@ -338,7 +338,6 @@ def compute_pathway_bottlenecks(policy, topo):
     # BFS from each DN to all reachable MNs
     path_lengths = []
     intermediates_on_paths = set()
-    n_paths_per_pair = []
 
     # Sample DNs (all would be expensive for 1314 DNs)
     rng = np.random.RandomState(42)

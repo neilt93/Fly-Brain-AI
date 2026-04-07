@@ -29,7 +29,7 @@ class DescendingDecoder:
         self.turn_right_ids = set(map(int, turn_right_ids))
         self.rhythm_ids = set(map(int, rhythm_ids))
         self.stance_ids = set(map(int, stance_ids))
-        self.rate_scale = rate_scale
+        self.rate_scale = max(rate_scale, 1e-8)
 
     def get_group_rates(self, brain_output: BrainOutput) -> dict:
         """Extract raw mean firing rates per group (before nonlinearities).
@@ -67,6 +67,12 @@ class DescendingDecoder:
     @classmethod
     def from_json(cls, path: str | Path, rate_scale: float = 40.0) -> "DescendingDecoder":
         """Load decoder groups from JSON file."""
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Decoder groups file not found: {path}\n"
+                "Generate with: python scripts/select_populations.py"
+            )
         with open(path) as f:
             groups = json.load(f)
         return cls(

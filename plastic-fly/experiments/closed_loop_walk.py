@@ -8,6 +8,8 @@ Motor layer modes:
   1. CPG (default): DescendingDecoder → VNC-lite → LocomotionBridge (PreprogrammedSteps)
   2. VNC connectome: DescendingDecoder → VNCBridge (MANC Brian2 LIF → MN decoder)
      This replaces the CPG with a real connectome-constrained VNC.
+  3. VNC firing rate: DescendingDecoder → FiringRateVNCBridge (Pugliese rate model)
+     Rhythm emerges from network dynamics (no external CPG/sine).
 
 Usage:
     # First: generate neuron population files
@@ -27,6 +29,10 @@ Usage:
 
     # VNC mode: real brain + real VNC (full connectome)
     python experiments/closed_loop_walk.py --use-vnc
+
+    # VNC firing rate mode: real brain + Pugliese rate VNC (emergent rhythm)
+    python experiments/closed_loop_walk.py --use-vnc-rate
+    python experiments/closed_loop_walk.py --use-vnc-rate --fake-brain
 
     # Longer run
     python experiments/closed_loop_walk.py --body-steps 10000
@@ -144,11 +150,12 @@ def run_closed_loop(
     output_dir: str = "logs/closed_loop",
     seed: int = 42,
     use_vnc_lite: bool = True,
-    motor_mode: str = "cpg",  # "cpg", "vnc", "vnc-fake"
+    motor_mode: str = "cpg",  # "cpg", "vnc", "vnc-fake", "vnc-rate"
     vnc_shuffle_seed: int | None = None,
     ablate_groups: list[str] | None = None,
     use_cpg: bool = False,
     connectome: str = "flywire",
+    vnc_connectome: str | None = None,
 ):
     import flygym
 
@@ -192,11 +199,25 @@ def run_closed_loop(
 
     # --- Motor layer setup ---
     use_vnc = motor_mode in ("vnc", "vnc-fake")
+    use_vnc_rate = motor_mode == "vnc-rate"
     vnc_bridge = None
+    vnc_rate_bridge = None
     locomotion = None
     vnc_lite = None
 
-    if use_vnc:
+    if use_vnc_rate:
+        from bridge.vnc_firing_rate_bridge import FiringRateVNCBridge
+        _vnc_src = vnc_connectome or ("banc" if connectome == "banc" else "manc")
+        if _vnc_src == "banc":
+            vnc_rate_bridge = FiringRateVNCBridge.from_banc()
+            motor_label = "VNC Firing Rate (BANC female, emergent rhythm)"
+        else:
+            vnc_rate_bridge = FiringRateVNCBridge()
+            motor_label = "VNC Firing Rate (MANC male, emergent rhythm)"
+        if ablate_groups:
+            motor_label += f" ABLATE({','.join(ablate_groups)})"
+        print(f"  Using firing rate VNC bridge ({motor_label})")
+    elif use_vnc:
         from bridge.vnc_bridge import VNCBridge
         use_fake_vnc = (motor_mode == "vnc-fake")
         vnc_bridge = VNCBridge(use_fake_vnc=use_fake_vnc, shuffle_seed=vnc_shuffle_seed,
@@ -237,7 +258,30 @@ def run_closed_loop(
     vnc_body_dt_s = 1e-4  # 0.1ms per body step (matches FlyGym timestep)
 
     # --- Warmup ---
-    if use_vnc:
+    if use_vnc_rate:
+        # VNC firing rate mode: initialize MN decoder, warmup VNC network,
+        # then ramp physics.
+        init_joints = np.array(obs["joints"][0], dtype=np.float64)
+        vnc_rate_bridge.reset(init_angles=init_joints)
+        vnc_rate_bridge.warmup(warmup_ms=200.0)
+        print(f"Warming up VNC-rate + physics ({warmup_steps} steps, ramp from init pose)...")
+        for i in range(warmup_steps):
+            ramp = min(1.0, i / max(warmup_steps * 0.5, 1.0))
+            neutral_rates = {"forward": 20.0 * ramp, "turn_left": 0.0,
+                             "turn_right": 0.0, "rhythm": 10.0 * ramp,
+                             "stance": 10.0 * ramp}
+            action = vnc_rate_bridge.step(neutral_rates, dt_s=vnc_body_dt_s)
+            try:
+                obs, _, terminated, truncated, info = sim.step(action)
+                if terminated or truncated:
+                    print("  Episode ended during warmup!")
+                    sim.close()
+                    return None
+            except Exception as e:
+                print(f"  Physics error during warmup step {i}: {e}")
+                sim.close()
+                return None
+    elif use_vnc:
         # VNC mode: initialize MN decoder with FlyGym init pose, then ramp.
         # The exponential smoothing transitions from init to VNC-driven angles.
         init_joints = np.array(obs["joints"][0], dtype=np.float64)
@@ -321,7 +365,16 @@ def run_closed_loop(
                     if g in group_rates:
                         group_rates[g] = 0.0
 
-            if use_vnc:
+            if use_vnc_rate:
+                # VNC firing rate mode: cache group rates (VNC steps at body freq)
+                current_group_rates = group_rates
+                current_cmd = LocomotionCommand(
+                    forward_drive=float(np.tanh(group_rates["forward"] / cfg.rate_scale)),
+                    turn_drive=float(np.tanh((group_rates["turn_left"] - group_rates["turn_right"]) / cfg.rate_scale)),
+                    step_frequency=1.0,
+                    stance_gain=1.0,
+                )
+            elif use_vnc:
                 # VNC mode: step VNC at brain frequency, cache for body steps
                 current_group_rates = group_rates
                 vnc_bridge.step_brain(group_rates, sim_ms=cfg.brain_dt_ms,
@@ -344,7 +397,7 @@ def run_closed_loop(
             active = int(np.sum(brain_output.firing_rates_hz > 0))
 
             if brain_steps % 5 == 1:
-                if use_vnc:
+                if use_vnc_rate or use_vnc:
                     print(f"  brain #{brain_steps:3d}: "
                           f"fwd_rate={group_rates['forward']:.0f}Hz "
                           f"turn_L={group_rates['turn_left']:.0f}Hz "
@@ -371,7 +424,10 @@ def run_closed_loop(
             })
 
         # --- Body step ---
-        if use_vnc:
+        if use_vnc_rate:
+            # VNC firing rate mode: VNC steps at body frequency (emergent rhythm)
+            action = vnc_rate_bridge.step(current_group_rates, dt_s=vnc_body_dt_s)
+        elif use_vnc:
             # VNC mode: step VNC at body frequency for smooth oscillation
             action = vnc_bridge.step(current_group_rates, dt_s=vnc_body_dt_s)
         else:
@@ -497,7 +553,12 @@ def run_closed_loop(
 
         joint_names = list(fly_obj.actuated_joints) if hasattr(fly_obj, 'actuated_joints') else []
 
-        controller_name = f"vnc_connectome" if use_vnc else "brain_driven"
+        if use_vnc_rate:
+            controller_name = "vnc_rate"
+        elif use_vnc:
+            controller_name = "vnc_connectome"
+        else:
+            controller_name = "brain_driven"
         unity_ts = {
             "controller": controller_name,
             "dt": dt,
@@ -544,6 +605,8 @@ if __name__ == "__main__":
                              help="Use real MANC VNC connectome (replaces CPG)")
     motor_group.add_argument("--use-vnc-fake", action="store_true",
                              help="Use fake VNC (oscillatory MN patterns, no Brian2 VNC)")
+    motor_group.add_argument("--use-vnc-rate", action="store_true",
+                             help="Use Pugliese firing rate VNC (emergent rhythm, no external CPG)")
     parser.add_argument("--no-vnc-lite", action="store_true",
                         help="Disable VNC-lite in CPG mode (use raw decoder)")
     parser.add_argument("--vnc-shuffle", type=int, default=None, metavar="SEED",
@@ -553,7 +616,9 @@ if __name__ == "__main__":
     parser.add_argument("--cpg", action="store_true",
                         help="Use Pugliese CPG instead of sine rhythm (VNC modes only)")
     parser.add_argument("--connectome", choices=["flywire", "banc"], default="flywire",
-                        help="Connectome dataset to use (default: flywire)")
+                        help="Connectome dataset for brain (default: flywire)")
+    parser.add_argument("--vnc-connectome", choices=["manc", "banc"], default=None,
+                        help="VNC connectome for --use-vnc-rate (default: matches --connectome)")
 
     args = parser.parse_args()
 
@@ -561,6 +626,8 @@ if __name__ == "__main__":
         motor_mode = "vnc"
     elif args.use_vnc_fake:
         motor_mode = "vnc-fake"
+    elif args.use_vnc_rate:
+        motor_mode = "vnc-rate"
     else:
         motor_mode = "cpg"
 
@@ -576,4 +643,5 @@ if __name__ == "__main__":
         ablate_groups=args.ablate,
         use_cpg=args.cpg,
         connectome=args.connectome,
+        vnc_connectome=args.vnc_connectome,
     )

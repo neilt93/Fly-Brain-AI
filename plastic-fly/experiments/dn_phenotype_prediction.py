@@ -236,7 +236,7 @@ def run_trial(
         action = locomotion.step(current_cmd)
         try:
             obs, _, term, trunc, _ = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
 
         if step % sample_interval == 0:

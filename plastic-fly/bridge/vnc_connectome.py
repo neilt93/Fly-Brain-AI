@@ -18,7 +18,6 @@ Architecture:
 """
 
 import json
-import sys
 import numpy as np
 from pathlib import Path
 from time import time
@@ -1172,12 +1171,3 @@ def create_vnc_runner(
             })
         return MinimalVNCRunner(cfg=cfg, shuffle_seed=shuffle_seed)
     return Brian2VNCRunner(cfg=cfg, shuffle_seed=shuffle_seed)
-
-
-# ============================================================================
-# Backward-compatible aliases (used by vnc_adapter.py)
-# ============================================================================
-
-FakeVNC = FakeVNCRunner
-VNCConnectome = Brian2VNCRunner
-create_vnc = create_vnc_runner

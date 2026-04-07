@@ -41,7 +41,6 @@ def analyze_mn_oscillation(runner, n_windows=20, window_ms=20.0):
 
     # --- Basic stats ---
     mean_per_window = rates.mean(axis=1)
-    std_per_window = rates.std(axis=1)
     active_per_window = (rates > 0).sum(axis=1)
 
     print(f"\n{'='*60}")

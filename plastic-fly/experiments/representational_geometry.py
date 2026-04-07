@@ -41,7 +41,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import BodyObservation, LocomotionCommand
+from bridge.interfaces import LocomotionCommand
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -158,7 +158,7 @@ def run_trial(
             if terminated or truncated:
                 sim.close()
                 return {"error": "warmup_ended", "pre_vectors": [], "perturb_vectors": []}
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             sim.close()
             return {"error": "warmup_physics", "pre_vectors": [], "perturb_vectors": []}
 
@@ -196,7 +196,7 @@ def run_trial(
         action = locomotion.step(current_cmd)
         try:
             obs, _, terminated, truncated, info = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
         if terminated or truncated:
             break

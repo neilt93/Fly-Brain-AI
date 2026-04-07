@@ -1,22 +1,47 @@
 """
-Download BANC / Frankenbrain connectome data from Harvard Dataverse.
+Download BANC connectome data from Harvard Dataverse.
 
-No authentication needed — direct download.
+No authentication needed — direct download via Dataverse API.
+
+Dataset: doi:10.7910/DVN/8TFGGB (CC-BY 4.0 license)
+    BANC = Brain And Nerve Cord — first complete brain+VNC connectome of an
+    adult female Drosophila melanogaster (~160K neurons, 214M synapses).
 
 Files:
-    banc_data.sqlite              — 160K neurons, full BANC connectome
-    frankenbrain_v1.1_data.sqlite — FAFB brain + MANC VNC, bridged via neck_bridge
+    banc_626_data.sqlite — v626 connectivity and metadata (~684 MB)
+    banc_meta_821.tab    — v821 neuron annotations with cell types (~36 MB)
 
-Schema:
-    meta            — neuron annotations (cell_type, modality, super_class)
-    edgelist_simple — connectivity (pre, post, count)
-    neck_bridge     — BANC↔MANC ID mapping (Frankenbrain only)
+Schema (banc_626_data.sqlite):
+    meta            — neuron annotations (root_id, flow, super_class, cell_class,
+                      cell_type, region, side, nerve, neurotransmitter_predicted)
+    edgelist_simple — connectivity (pre_pt_root_id, post_pt_root_id, n)
+
+Meta columns (33 total, key ones):
+    root_id, root_626, supervoxel_id, nucleus_id, position, nucleus_position,
+    region, side, proofread, roughly_proofread, flow, super_class, cell_class,
+    cell_sub_class, hemilineage, cell_function, cell_function_detailed,
+    neurotransmitter_verified, neuropeptide_verified, neurotransmitter_predicted,
+    peripheral_target_type, body_part_sensory, body_part_effector, nerve,
+    fafb_match, hemibrain_match, manc_match, fanc_match, sexually_dimorphic
+
+Classification hierarchy:
+    flow:        afferent | efferent | intrinsic
+    super_class: ascending | descending | motor | sensory | visual_projection |
+                 visual_centrifugal | endocrine | optic_lobe_intrinsic |
+                 central_brain_intrinsic
+    cell_class:  ~106 categories (e.g., leg_motor_neuron,
+                 antennal_lobe_projection_neuron, olfactory_receptor_neuron)
+    cell_type:   individual neuron names (e.g., DNge110, Ti flexor MN)
+
+VNC neuron identification:
+    region='ventral_nerve_cord'
+    Leg MNs: super_class='motor' AND cell_class contains 'leg_motor'
+    DNs: super_class='descending' OR flow='efferent'
 
 Usage:
-    python scripts/download_banc.py                  # download both
-    python scripts/download_banc.py --banc-only       # just BANC
-    python scripts/download_banc.py --frankenbrain-only
-    python scripts/download_banc.py --inspect         # inspect existing DB
+    python scripts/download_banc.py                # download BANC sqlite + meta
+    python scripts/download_banc.py --inspect       # inspect existing DB
+    python scripts/download_banc.py --meta-only     # just the v821 meta table
 """
 
 import sys
@@ -28,11 +53,19 @@ from time import time
 ROOT = Path(__file__).resolve().parent.parent
 BANC_DIR = ROOT / "data" / "banc"
 
-# Harvard Dataverse URLs — update these with actual DOI links once confirmed
-# The user indicated these are direct-download SQLite files on Harvard Dataverse.
-# TODO: Replace with actual download URLs from Harvard Dataverse.
-BANC_URL = None  # e.g., "https://dataverse.harvard.edu/api/access/datafile/XXXXX"
-FRANKENBRAIN_URL = None
+# Harvard Dataverse: doi:10.7910/DVN/8TFGGB
+# File download via Dataverse Data Access API:
+#   https://dataverse.harvard.edu/api/access/datafile/{file_id}
+#
+# File IDs discovered via dataset metadata API (2026-04-03):
+#   banc_626_data.sqlite: file_id = 11842995 (sql/ directory, ~684 MB)
+#   banc_meta_821.tab:    file_id = 13457250 (root directory, ~36 MB)
+DATAVERSE_BASE = "https://dataverse.harvard.edu/api/access/datafile"
+BANC_SQLITE_FILE_ID = 11842995
+BANC_META_821_FILE_ID = 13457250
+
+BANC_SQLITE_URL = f"{DATAVERSE_BASE}/{BANC_SQLITE_FILE_ID}"
+BANC_META_821_URL = f"{DATAVERSE_BASE}/{BANC_META_821_FILE_ID}"
 
 
 def _ensure_dirs():
@@ -118,69 +151,71 @@ def inspect_db(db_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Download BANC/Frankenbrain data")
-    parser.add_argument("--banc-only", action="store_true",
-                        help="Download only banc_data.sqlite")
-    parser.add_argument("--frankenbrain-only", action="store_true",
-                        help="Download only frankenbrain_v1.1_data.sqlite")
+    parser = argparse.ArgumentParser(description="Download BANC connectome data")
     parser.add_argument("--inspect", action="store_true",
                         help="Inspect existing database files")
+    parser.add_argument("--meta-only", action="store_true",
+                        help="Download only the v821 meta table (36 MB)")
     args = parser.parse_args()
 
     _ensure_dirs()
 
     if args.inspect:
-        inspect_db(BANC_DIR / "banc_data.sqlite")
-        inspect_db(BANC_DIR / "frankenbrain_v1.1_data.sqlite")
+        inspect_db(BANC_DIR / "banc_626_data.sqlite")
+        meta_tab = BANC_DIR / "banc_meta_821.tab"
+        if meta_tab.exists():
+            print(f"\n=== banc_meta_821.tab ({meta_tab.stat().st_size/1024/1024:.0f} MB) ===")
+            print(f"  (Tab-separated metadata file, {sum(1 for _ in open(meta_tab)):,} lines)")
         return
 
-    print("BANC / Frankenbrain download")
+    print("BANC connectome download")
+    print(f"  Dataset: doi:10.7910/DVN/8TFGGB (CC-BY 4.0)")
     print(f"  Destination: {BANC_DIR}")
     print()
 
-    if not args.frankenbrain_only:
-        dest = BANC_DIR / "banc_data.sqlite"
+    # Download SQLite (main database, ~684 MB)
+    if not args.meta_only:
+        dest = BANC_DIR / "banc_626_data.sqlite"
         if dest.exists():
-            print(f"  banc_data.sqlite already exists ({dest.stat().st_size/1024/1024:.0f} MB)")
+            print(f"  banc_626_data.sqlite already exists ({dest.stat().st_size/1024/1024:.0f} MB)")
         else:
-            download_file(BANC_URL, dest, "banc_data.sqlite")
+            ok = download_file(BANC_SQLITE_URL, dest, "banc_626_data.sqlite (~684 MB)")
+            if not ok:
+                print()
+                print("  If automatic download fails, download manually:")
+                print(f"    URL: {BANC_SQLITE_URL}")
+                print(f"    Save to: {dest}")
+                print()
+                print("  Or browse the dataset at:")
+                print("    https://dataverse.harvard.edu/dataset.xhtml"
+                      "?persistentId=doi:10.7910/DVN/8TFGGB")
 
-    if not args.banc_only:
-        dest = BANC_DIR / "frankenbrain_v1.1_data.sqlite"
-        if dest.exists():
-            print(f"  frankenbrain already exists ({dest.stat().st_size/1024/1024:.0f} MB)")
-        else:
-            download_file(FRANKENBRAIN_URL, dest, "frankenbrain_v1.1_data.sqlite")
-
-    # Instructions for manual download
-    if BANC_URL is None or FRANKENBRAIN_URL is None:
-        print()
-        print("=" * 60)
-        print("MANUAL DOWNLOAD INSTRUCTIONS")
-        print("=" * 60)
-        print()
-        print("Download these SQLite files from Harvard Dataverse:")
-        print()
-        print("  1. banc_data.sqlite")
-        print("     -> 160K neurons, full BANC connectome")
-        print()
-        print("  2. frankenbrain_v1.1_data.sqlite")
-        print("     -> FAFB brain + MANC VNC, bridged via neck_bridge table")
-        print("     -> This is the most useful one for our pipeline")
-        print()
-        print(f"  Place both files in: {BANC_DIR}")
-        print()
-        print("  Then verify with: python scripts/download_banc.py --inspect")
+    # Download v821 meta table (~36 MB)
+    dest = BANC_DIR / "banc_meta_821.tab"
+    if dest.exists():
+        print(f"  banc_meta_821.tab already exists ({dest.stat().st_size/1024/1024:.0f} MB)")
+    else:
+        ok = download_file(BANC_META_821_URL, dest, "banc_meta_821.tab (~36 MB)")
+        if not ok:
+            print()
+            print("  If automatic download fails, download manually:")
+            print(f"    URL: {BANC_META_821_URL}")
+            print(f"    Save to: {dest}")
 
     # Verify
     print()
     print("=== Verification ===")
-    for name in ["banc_data.sqlite", "frankenbrain_v1.1_data.sqlite"]:
-        p = BANC_DIR / name
-        if p.exists():
-            inspect_db(p)
-        else:
-            print(f"  {name}: NOT FOUND")
+    db = BANC_DIR / "banc_626_data.sqlite"
+    if db.exists():
+        inspect_db(db)
+    else:
+        print(f"  banc_626_data.sqlite: NOT FOUND")
+
+    meta = BANC_DIR / "banc_meta_821.tab"
+    if meta.exists():
+        print(f"\n  banc_meta_821.tab: {meta.stat().st_size/1024/1024:.0f} MB (OK)")
+    else:
+        print(f"  banc_meta_821.tab: NOT FOUND")
 
 
 if __name__ == "__main__":

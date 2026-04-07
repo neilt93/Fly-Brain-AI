@@ -1,0 +1,30 @@
+{
+  "name": "best_seed_2024",
+  "n_antiphase": 3,
+  "mean_corr": 0.020111585974846247,
+  "correlations": {
+    "LF": -0.6787141745224592,
+    "LM": 0.7917466891731678,
+    "LH": 0.6950503802390444,
+    "RF": 0.6438501024137137,
+    "RM": -0.7395764802018806,
+    "RH": -0.5916870012525086
+  },
+  "segment_exc_mults": {
+    "T1": 0.015,
+    "T2": 0.01,
+    "T3": 0.01
+  },
+  "base_config": {
+    "a": 1.0,
+    "theta": 7.5,
+    "fr_cap": 200.0,
+    "exc_mult": 0.01,
+    "inh_mult": 0.01,
+    "inh_scale": 2.0,
+    "use_adaptation": false,
+    "normalize_weights": false,
+    "delay_inh_ms": 3.0,
+    "param_cv": 0.1
+  }
+}

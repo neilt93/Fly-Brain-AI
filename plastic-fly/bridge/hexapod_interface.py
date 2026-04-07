@@ -30,7 +30,7 @@ Usage:
 import time
 import numpy as np
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from bridge.interfaces import BodyObservation

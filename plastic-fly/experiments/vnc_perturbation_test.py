@@ -117,7 +117,7 @@ def run_perturbation(
         if perturbed and step == perturb_step + 10:
             try:
                 sim.physics.data.xfrc_applied[:] = 0
-            except Exception:
+            except (AttributeError, IndexError, RuntimeError):  # physics state may not support xfrc reset
                 pass
 
         try:

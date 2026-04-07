@@ -16,7 +16,6 @@ Usage:
     mn_rates = runner.get_mn_rates()
 """
 
-import sys
 import numpy as np
 from pathlib import Path
 from time import time
@@ -243,12 +242,12 @@ class UnifiedBrainRunner:
         # Compute DN readout rates (for backward compatibility / logging)
         dn_rates = np.zeros(len(self._dn_brian_idx), dtype=np.float32)
         for j, idx in enumerate(self._dn_brian_idx):
-            dn_rates[j] = float(counts_after[idx] - counts_before[idx]) / window_s
+            dn_rates[j] = float(counts_after[idx] - counts_before[idx]) / window_s if window_s > 0 else 0.0
 
         # Cache MN rates
         self._mn_rates = np.zeros(len(self._mn_brian_idx), dtype=np.float32)
         for j, idx in enumerate(self._mn_brian_idx):
-            self._mn_rates[j] = float(counts_after[idx] - counts_before[idx]) / window_s
+            self._mn_rates[j] = float(counts_after[idx] - counts_before[idx]) / window_s if window_s > 0 else 0.0
 
         return BrainOutput(
             neuron_ids=self._dn_valid_ids,

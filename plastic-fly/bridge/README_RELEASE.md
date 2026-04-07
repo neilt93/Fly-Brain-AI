@@ -110,7 +110,7 @@ the bridge package. Override with `BridgeConfig(brain_repo_root=...)`.
   author  = {Tripathi, Neil},
   title   = {Brain-Body Bridge: Connectome-Constrained Sensorimotor Interface for Drosophila},
   year    = {2026},
-  url     = {TODO}
+  url     = {https://github.com/neilt93/Fly-Brain-AI}
 }
 ```
 

@@ -92,7 +92,7 @@ def run_drive_sweep(drive_hz, body_steps, warmup_steps, use_cpg):
         action = bridge.step(rates, dt_s=dt_s)
         try:
             obs, _, terminated, truncated, _ = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
         if terminated or truncated:
             break

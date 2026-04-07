@@ -36,7 +36,7 @@ from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
 from bridge.flygym_adapter import FlyGymAdapter
-from bridge.vnc_connectome import Brian2VNCRunner, VNCConfig, VNCInput, VNCOutput
+from bridge.vnc_connectome import Brian2VNCRunner, VNCConfig
 from bridge.vnc_bridge import VNCBridge
 
 

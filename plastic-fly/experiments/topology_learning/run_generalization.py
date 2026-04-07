@@ -107,7 +107,7 @@ def evaluate_turning(policy, policy_config, n_episodes=5, episode_length=1000):
                 obs, _, term, trunc, _ = sim.step(action)
                 if term or trunc:
                     break
-            except Exception:
+            except (RuntimeError, ValueError):  # MuJoCo physics instability
                 break
 
         end_pos = np.array(obs["fly"][0])
@@ -179,7 +179,7 @@ def evaluate_endurance(policy, policy_config, n_episodes=5, episode_length=2000)
                 if term or trunc or z < 0.5:
                     break
                 survived += 1
-            except Exception:
+            except (RuntimeError, ValueError):  # MuJoCo physics instability
                 break
 
         end_pos = np.array(obs["fly"][0])
@@ -202,7 +202,6 @@ def main():
 
     # Find all trained models
     param_files = sorted(log_dir.glob("*_params.npy"))
-    curve_files = sorted(log_dir.glob("*_curve.json"))
 
     if not param_files:
         print(f"No trained models found in {log_dir}")

@@ -8,7 +8,6 @@ Two implementations:
 Use create_brain_runner() factory to pick the right one.
 """
 
-import sys
 import numpy as np
 from pathlib import Path
 from time import time
@@ -181,6 +180,14 @@ class Brian2BrainRunner:
 
         else:
             # FlyWire format: CSV + parquet
+            for label, p in [("Completeness CSV", path_comp),
+                             ("Connectivity parquet", path_con)]:
+                if not Path(p).exists():
+                    raise FileNotFoundError(
+                        f"{label} not found: {p}\n"
+                        "Expected in brain-model/ (Drosophila_brain_model repo).\n"
+                        "See README.md for setup instructions."
+                    )
             df_comp = pd.read_csv(path_comp, index_col=0)
             df_con = pd.read_parquet(path_con)
 
@@ -294,7 +301,7 @@ class Brian2BrainRunner:
         window_s = sim_ms / 1000.0
         readout_rates = np.zeros(len(self._readout_brian_idx), dtype=np.float32)
         for j, brian_idx in enumerate(self._readout_brian_idx):
-            readout_rates[j] = float(counts_after[brian_idx] - counts_before[brian_idx]) / window_s
+            readout_rates[j] = float(counts_after[brian_idx] - counts_before[brian_idx]) / window_s if window_s > 0 else 0.0
 
         return BrainOutput(
             neuron_ids=self._readout_flyids,

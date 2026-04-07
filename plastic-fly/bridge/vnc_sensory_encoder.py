@@ -127,6 +127,12 @@ class VNCSensoryEncoder:
         import pandas as pd
         import pyarrow.feather as feather
 
+        annotations_path = Path(annotations_path)
+        if not annotations_path.exists():
+            raise FileNotFoundError(
+                f"MANC annotations file not found: {annotations_path}\n"
+                "Download from: https://male-cns.janelia.org/download/"
+            )
         ann = pd.DataFrame(feather.read_feather(str(annotations_path)))
 
         # Select VNC sensory neurons entering via leg nerves

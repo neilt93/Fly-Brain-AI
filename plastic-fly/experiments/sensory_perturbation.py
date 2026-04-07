@@ -42,7 +42,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import BodyObservation, LocomotionCommand, BrainOutput
+from bridge.interfaces import BodyObservation, LocomotionCommand
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -253,7 +253,7 @@ def run_single_perturbation(
             if terminated or truncated:
                 sim.close()
                 return {"error": "warmup_ended"}
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             sim.close()
             return {"error": "warmup_physics"}
 
@@ -320,7 +320,7 @@ def run_single_perturbation(
         action = locomotion.step(current_cmd)
         try:
             obs, reward, terminated, truncated, info = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
 
         if step % sample_interval == 0:
@@ -372,7 +372,6 @@ def run_single_perturbation(
 
     heading_pre = mean_heading_range(1, onset_sample)
     heading_perturb = mean_heading_range(onset_sample, offset_sample)
-    heading_recovery = mean_heading_range(offset_sample, len(positions))
     heading_change = heading_perturb - heading_pre
 
     # Position displacement during perturbation phase

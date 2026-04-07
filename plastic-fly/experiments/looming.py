@@ -33,7 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import BodyObservation, LocomotionCommand, BrainOutput
+from bridge.interfaces import LocomotionCommand
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -214,7 +214,7 @@ def run_looming_trial(
         action = locomotion.step(current_cmd)
         try:
             obs, _, terminated, truncated, info = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
 
         if step % sample_interval == 0:

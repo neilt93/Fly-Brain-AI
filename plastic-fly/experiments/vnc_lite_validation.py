@@ -38,7 +38,7 @@ def _write_json_atomic(path: Path, payload: dict):
                 tmp_path.unlink(missing_ok=True)
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import LocomotionCommand, BodyObservation, BrainOutput
+from bridge.interfaces import LocomotionCommand, BrainOutput
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -147,7 +147,7 @@ def run_trial(
         action = locomotion.step(current_cmd)
         try:
             obs, _, term, trunc, _ = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
         if step % 50 == 0:
             positions.append(np.array(obs["fly"][0]).tolist())
@@ -449,7 +449,6 @@ def test_causal_dissociation(use_fake_brain=False, seed=42):
     vnc_tl = results.get("vnc_lite_turn_left_ablated")
     if vnc_bl and vnc_tl:
         heading_change = abs(vnc_tl["mean_turn_drive"] - vnc_bl["mean_turn_drive"])
-        dist_change = abs(vnc_tl["forward_distance"] - vnc_bl["forward_distance"])
         t3 = heading_change > 0.01  # minimal heading effect
         tests.append(("Turn-L ablation: heading changes", t3,
                        f"turn_delta={heading_change:.4f}"))

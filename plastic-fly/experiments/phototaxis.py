@@ -37,7 +37,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import BodyObservation, BrainInput, LocomotionCommand
+from bridge.interfaces import LocomotionCommand
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -450,7 +450,6 @@ def run_phototaxis(
 
     l_turn = real_summary["light_left_turn"]
     r_turn = real_summary["light_right_turn"]
-    contrast = real_summary["turn_contrast"]
     directional = real_summary["directional_index"]
 
     # Test 1: Left light produces leftward turning (negative turn_drive)

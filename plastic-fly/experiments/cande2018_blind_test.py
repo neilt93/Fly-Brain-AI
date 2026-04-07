@@ -47,7 +47,7 @@ def _write_json_atomic(path: Path, payload: dict):
                 tmp_path.unlink(missing_ok=True)
 
 from bridge.config import BridgeConfig
-from bridge.interfaces import LocomotionCommand, BodyObservation, BrainOutput
+from bridge.interfaces import LocomotionCommand, BrainOutput
 from bridge.sensory_encoder import SensoryEncoder
 from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
@@ -326,7 +326,7 @@ def run_boost_trial(
         action = locomotion.step(current_cmd)
         try:
             obs, _, term, trunc, _ = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
         if step % 50 == 0:
             positions.append(np.array(obs["fly"][0]).tolist())

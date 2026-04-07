@@ -28,7 +28,6 @@ Usage:
 import sys
 import json
 import time
-import copy
 import argparse
 import numpy as np
 from pathlib import Path
@@ -42,7 +41,7 @@ from bridge.brain_runner import create_brain_runner
 from bridge.descending_decoder import DescendingDecoder
 from bridge.locomotion_bridge import LocomotionBridge
 from bridge.flygym_adapter import FlyGymAdapter
-from analysis.behavior_metrics import compute_behavior, BehaviorReport
+from analysis.behavior_metrics import compute_behavior
 
 
 def _write_json_atomic(path: Path, payload: dict):

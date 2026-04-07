@@ -90,7 +90,7 @@ def run_minimal_vnc_walk(
                 obs, _, term, trunc, _ = sim.step(action)
                 if term or trunc:
                     break
-            except Exception:
+            except (RuntimeError, ValueError):  # MuJoCo physics instability
                 break
 
             step += 1

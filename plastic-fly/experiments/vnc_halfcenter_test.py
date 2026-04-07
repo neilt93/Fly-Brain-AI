@@ -12,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import json
 import numpy as np
 from time import time
-from collections import defaultdict
 
 
 def _write_json_atomic(path: Path, payload: dict):

@@ -6,7 +6,7 @@ Pipeline:
     Brain BrainOutput
     → DescendingDecoder.get_group_rates() → {forward, turn_L, turn_R, rhythm, stance}
     → VNCAdapter.brain_to_dn_rates()       → {dn_body_id: rate_hz, ...}
-    → VNCConnectome.step()                 → {mn_body_id: rate_hz, ...}
+    → Brian2VNCRunner.step()                 → {mn_body_id: rate_hz, ...}
     → VNCAdapter.mn_rates_to_action()      → FlyGym action dict
 
 This module handles two cross-domain mappings:
@@ -20,7 +20,7 @@ from typing import Optional
 
 from bridge.interfaces import BrainOutput, BodyObservation
 from bridge.vnc_connectome import (
-    VNCConnectome, FakeVNC, VNCConfig,
+    Brian2VNCRunner, FakeVNCRunner, VNCConfig,
     OUR_READOUT_DN_TYPES,
     MN_TYPE_TO_JOINT_GROUP, JOINT_GROUP_TO_DOF,
     SEGMENT_SIDE_TO_LEG, LEG_ORDER, JOINTS_PER_LEG, N_JOINTS,
@@ -37,7 +37,7 @@ class VNCAdapter:
         4. CPG-free joint angle generation from MN population activity
 
     Args:
-        vnc: VNCConnectome or FakeVNC instance.
+        vnc: Brian2VNCRunner or FakeVNCRunner instance.
         decoder_groups_path: path to decoder_groups.json (FlyWire IDs).
         dn_type_map: optional pre-built {dn_type: [manc_body_ids]} dict.
             If None, loads from vnc.get_dn_type_to_body_ids().
@@ -47,7 +47,7 @@ class VNCAdapter:
 
     def __init__(
         self,
-        vnc: "VNCConnectome | FakeVNC",
+        vnc: "Brian2VNCRunner | FakeVNCRunner",
         decoder_groups_path: Optional[str | Path] = None,
         dn_type_map: Optional[dict] = None,
         base_joint_angles: Optional[np.ndarray] = None,
@@ -472,7 +472,7 @@ class VNCAdapter:
 
 
 def create_vnc_adapter(
-    vnc: "VNCConnectome | FakeVNC",
+    vnc: "Brian2VNCRunner | FakeVNCRunner",
     decoder_groups_path: Optional[str | Path] = None,
     base_joint_angles: Optional[np.ndarray] = None,
 ) -> VNCAdapter:

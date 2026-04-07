@@ -175,7 +175,7 @@ def run_trial_with_ablation(
         action = locomotion.step(current_cmd)
         try:
             obs, _, terminated, truncated, info = sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             break
 
         if step % sample_interval == 0:
@@ -235,8 +235,6 @@ def run_dose_response(body_steps=5000, warmup_steps=500, use_fake_brain=False,
 
     forward_ids = decoder_groups["forward_ids"]
     n_fwd = len(forward_ids)
-    rng = np.random.RandomState(seed)
-
     print("=" * 60)
     print("DOSE-RESPONSE: Forward Neuron Ablation")
     print("Forward group: %d neurons" % n_fwd)

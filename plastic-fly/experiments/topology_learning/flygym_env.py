@@ -67,7 +67,7 @@ class FlyGymLocomotionEnv:
                 obs, _, term, trunc, _ = self.sim.step(action)
                 if term or trunc:
                     break
-            except Exception:
+            except (RuntimeError, ValueError):  # MuJoCo physics instability
                 self.sim = None  # Force recreation on next reset
                 break
 
@@ -91,7 +91,7 @@ class FlyGymLocomotionEnv:
 
         try:
             obs, _, terminated, truncated, _ = self.sim.step(action)
-        except Exception:
+        except (RuntimeError, ValueError):  # MuJoCo physics instability
             # Force sim recreation on next reset to avoid corrupted state
             self.sim = None
             return np.zeros(90, dtype=np.float32), -1.0, True

@@ -227,6 +227,12 @@ class PuglieseCPG:
     @classmethod
     def from_json(cls, path: str | Path, neuron_params: dict | None = None, n_legs: int = 6):
         """Load CPG from weight file (e.g. data/cpg_weights.json)."""
+        path = Path(path)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"CPG weights file not found: {path}\n"
+                "Expected at: data/cpg_weights.json"
+            )
         with open(path) as f:
             data = json.load(f)
 

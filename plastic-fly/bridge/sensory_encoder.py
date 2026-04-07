@@ -211,6 +211,12 @@ class SensoryEncoder:
         baseline_rate_hz: float = 10.0,
     ) -> "SensoryEncoder":
         """Load channel map from JSON and create encoder."""
+        channel_map_path = Path(channel_map_path)
+        if not channel_map_path.exists():
+            raise FileNotFoundError(
+                f"Channel map file not found: {channel_map_path}\n"
+                "Generate with: python scripts/select_populations.py"
+            )
         with open(channel_map_path) as f:
             channel_map = json.load(f)
         return cls(

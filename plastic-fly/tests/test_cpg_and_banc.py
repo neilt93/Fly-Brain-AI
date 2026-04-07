@@ -563,7 +563,7 @@ class TestCPGRhythmModulation:
         try:
             bridge = VNCBridge(use_fake_vnc=False, use_cpg=True)
             return bridge
-        except Exception:
+        except (ImportError, RuntimeError):  # Brian2 or VNC model unavailable
             pytest.skip("Brian2 VNC not available")
 
     def test_cpg_rhythm_modulation_produces_nonzero_rates(self):

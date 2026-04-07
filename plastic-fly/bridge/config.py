@@ -7,7 +7,7 @@ Supports multiple connectomes via the `connectome` parameter:
     "banc"    — BANC unified brain+VNC (~160K neurons, single animal)
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 

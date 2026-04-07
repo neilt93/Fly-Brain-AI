@@ -29,6 +29,8 @@ plastic-fly/logs/
 # Data files (large, regeneratable)
 plastic-fly/data/*.npy
 plastic-fly/data/manc/*.feather
+plastic-fly/data/banc/*.sqlite
+plastic-fly/data/banc/*.tab
 
 # Local settings
 .claude/
@@ -55,6 +57,15 @@ FlyBrainViz/Assets/_Recovery.meta
 # Topology learning pycache
 plastic-fly/experiments/topology_learning/__pycache__/
 
+# Presentation artifacts (generated, not tracked)
+*.pptx
+*.pdf
+create_*presentation*.py
+create_ramdya_deck.py
+export_pdf.py
+
 # Keep these tracked
 !plastic-fly/data/channel_map.json
 !plastic-fly/data/decoder_groups.json
+!plastic-fly/figures/connectome_paper_draft.pdf
+!plastic-fly/paper/connectome_sensorimotor_paper.pdf
