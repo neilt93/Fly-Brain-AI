@@ -18,14 +18,13 @@ Usage:
 import json
 import numpy as np
 from dataclasses import dataclass, field
-from pathlib import Path
 from time import time
 
 from bridge.vnc_connectome import (
     VNCConfig, VNCInput, VNCOutput,
     NT_SIGN, OUR_READOUT_DN_TYPES,
-    MN_TYPE_TO_JOINT_GROUP, JOINT_GROUP_TO_DOF,
-    SEGMENT_SIDE_TO_LEG, LEG_ORDER,
+    MN_TYPE_TO_JOINT_GROUP,
+    LEG_ORDER,
 )
 
 
@@ -112,7 +111,6 @@ class MinimalVNCRunner:
         self._nt_map = dict(zip(
             nt_unique["body"].values, nt_unique["consensus_nt"].values))
 
-        t1 = time()
         self._conn = pd.DataFrame(
             feather.read_feather(str(self.cfg.connectivity_path)))
         print(f"  Data loaded in {time()-t0:.1f}s "
@@ -122,8 +120,6 @@ class MinimalVNCRunner:
 
     def _extract_circuit(self):
         """Extract minimal locomotion circuit by MN-drive ranking."""
-        import pandas as pd
-
         ann = self._ann
         conn = self._conn
         cfg = self.cfg

@@ -531,8 +531,6 @@ class Brian2VNCRunner:
 
     def _select_neurons(self):
         """Select thoracic VNC neurons: DNs + leg MNs + intrinsic interneurons."""
-        import pandas as pd
-
         ann = self._ann
 
         # --- Descending neurons (all, not just thoracic -- DNs project to VNC) ---

@@ -85,10 +85,9 @@ class UnifiedBrainRunner:
             print(f"  Warmup done in {time() - t0:.1f}s")
 
     def _build_network(self, w_syn, f_poi):
-        import pandas as pd
         from brian2 import (
             NeuronGroup, Synapses, PoissonGroup, SpikeMonitor, Network,
-            mV, ms, Hz, second,
+            mV, ms, Hz,
         )
 
         # Load BANC data

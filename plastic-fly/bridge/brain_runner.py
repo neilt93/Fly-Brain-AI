@@ -200,7 +200,6 @@ class Brian2BrainRunner:
             return neuron_ids, pre_idx, post_idx, weights
 
     def _build_network(self, path_comp, path_con, w_syn, f_poi):
-        import pandas as pd
         from brian2 import (
             NeuronGroup, Synapses, PoissonGroup, SpikeMonitor, Network,
             mV, ms, Hz, second,

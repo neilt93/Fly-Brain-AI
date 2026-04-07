@@ -20,7 +20,7 @@ from typing import Optional
 
 from bridge.interfaces import BrainOutput, BodyObservation
 from bridge.vnc_connectome import (
-    Brian2VNCRunner, FakeVNCRunner, VNCConfig,
+    Brian2VNCRunner, FakeVNCRunner,
     OUR_READOUT_DN_TYPES,
     MN_TYPE_TO_JOINT_GROUP, JOINT_GROUP_TO_DOF,
     SEGMENT_SIDE_TO_LEG, LEG_ORDER, JOINTS_PER_LEG, N_JOINTS,

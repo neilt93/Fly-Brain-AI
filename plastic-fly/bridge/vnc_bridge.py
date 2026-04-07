@@ -30,7 +30,7 @@ from pathlib import Path
 from bridge.interfaces import BodyObservation
 from bridge.vnc_connectome import (
     VNCInput, VNCOutput, VNCConfig,
-    FakeVNCRunner, Brian2VNCRunner, create_vnc_runner,
+    create_vnc_runner,
 )
 from bridge.mn_decoder import MotorNeuronDecoder
 from bridge.vnc_sensory_encoder import VNCSensoryEncoder
