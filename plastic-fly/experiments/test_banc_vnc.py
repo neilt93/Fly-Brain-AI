@@ -24,7 +24,7 @@ from time import time
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from bridge.banc_loader import load_banc_vnc, LEG_ORDER, BANCVNCData
+from bridge.banc_loader import load_banc_vnc, LEG_ORDER
 from bridge.vnc_firing_rate import FiringRateVNCRunner, FiringRateVNCConfig
 
 # ============================================================================
