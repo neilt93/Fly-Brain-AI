@@ -103,6 +103,8 @@ def _banc_celltype_to_joint(cell_type: str, leg: str) -> tuple:
     return None, None
 
 # DN types associated with each decoder group (from literature + Brian2 VNC)
+# DN types per group. Turn groups are lateralized by soma side in
+# _build_group_dn_mapping (left-soma -> turn_left, right -> turn_right).
 _GROUP_DN_TYPES = {
     "forward": ["DNg100", "DNa01", "DNa02", "DNb02", "DNp30", "DNp02"],
     "turn_left": ["DNg11", "DNg29", "DNg33", "DNg35", "DNg47"],
@@ -411,14 +413,19 @@ class FiringRateVNCBridge:
             self.vnc.I_stim[idx] = baseline_current
 
         # Apply group-specific stimulation (additive on top of baseline)
+        # Turn groups get a 3x boost: their ~12 neurons must override the
+        # tonic symmetry from 1300+ baseline-stimulated DNs.
+        _turn_boost = 3.0
         for group_name, rate_hz in group_rates.items():
             if rate_hz <= 0:
                 continue
             indices = self._group_to_dn_indices.get(group_name, [])
             if not indices:
                 continue
-            # Convert to current (same as stimulate_dn_type)
-            total_rate = self.dn_baseline_hz + rate_hz
+            eff_rate = rate_hz
+            if group_name in ("turn_left", "turn_right"):
+                eff_rate *= _turn_boost
+            total_rate = self.dn_baseline_hz + eff_rate
             current = self.cfg.theta * (total_rate / 20.0)
             for idx in indices:
                 self.vnc.I_stim[idx] = current
@@ -498,6 +505,21 @@ class FiringRateVNCBridge:
         amp_scale = float(np.clip(np.tanh(fwd_rate / 20.0), 0.1, 1.0))
         base_hz = 40.0  # Fallback rhythm base rate
 
+        # Turn-driven per-leg amplitude: inner legs step shorter, outer longer.
+        # This produces differential stride length = the primary mechanism for
+        # turning in Drosophila (Cande et al. 2018, DeAngelis et al. 2019).
+        tl = float(self._cached_group_rates.get("turn_left", 0.0))
+        tr = float(self._cached_group_rates.get("turn_right", 0.0))
+        turn_asym = np.tanh((tl - tr) / 15.0)  # [-1, +1], positive = left turn
+        # Per-leg scale: LF/LM/LH = left legs (idx 0-2), RF/RM/RH = right (3-5)
+        leg_amp = np.ones(6)
+        if abs(turn_asym) > 0.05:
+            # Inner legs reduce amplitude, outer legs increase
+            for li in range(3):    # left legs
+                leg_amp[li] = 1.0 - 0.5 * turn_asym   # left turn -> reduce left
+            for li in range(3, 6): # right legs
+                leg_amp[li] = 1.0 + 0.5 * turn_asym   # left turn -> boost right
+
         for j in range(n_mn):
             bid = int(mn_ids[j])
             if bid not in self._mn_rhythm_map:
@@ -515,12 +537,13 @@ class FiringRateVNCBridge:
             # Compute blend weight (more fallback when quality is worse)
             blend = self.fallback_blend * (1.0 - quality / quality_threshold)
 
-            # Fallback signal
+            # Fallback signal with per-leg turn asymmetry
             osc = np.sin(self._fallback_phase[leg_idx])
+            leg_scale = amp_scale * leg_amp[leg_idx]
             if is_ext:
-                fallback_rate = base_hz * amp_scale * max(0.0, 0.5 - 0.5 * osc)
+                fallback_rate = base_hz * leg_scale * max(0.0, 0.5 - 0.5 * osc)
             else:
-                fallback_rate = base_hz * amp_scale * max(0.0, 0.5 + 0.5 * osc)
+                fallback_rate = base_hz * leg_scale * max(0.0, 0.5 + 0.5 * osc)
 
             # Blend: network * (1-blend) + fallback * blend
             rates[j] = float(rates[j]) * (1.0 - blend) + fallback_rate * blend
