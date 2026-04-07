@@ -111,6 +111,11 @@ _GROUP_DN_TYPES = {
     "turn_right": ["DNg11", "DNg29", "DNg33", "DNg35", "DNg47"],
     "rhythm": ["DNb01", "DNb08", "DNb09", "DNg100"],
     "stance": ["DNp44", "DNp35", "DNp42"],
+    # Escape pathway: giant fiber / LPLC2 targets. Lateralized by side.
+    "escape_left": ["DNg02_a", "DNg02_b", "DNg02_c", "DNg02_d",
+                     "DNg02_f", "DNg02_g", "DNg02_h", "DNg14", "DNp09"],
+    "escape_right": ["DNg02_a", "DNg02_b", "DNg02_c", "DNg02_d",
+                      "DNg02_f", "DNg02_g", "DNg02_h", "DNg14", "DNp09"],
 }
 
 
@@ -358,8 +363,8 @@ class FiringRateVNCBridge:
 
         for group_name, dn_types in _GROUP_DN_TYPES.items():
             indices = []
-            need_left = (group_name == "turn_left")
-            need_right = (group_name == "turn_right")
+            need_left = group_name in ("turn_left", "escape_left")
+            need_right = group_name in ("turn_right", "escape_right")
             lateralize = (need_left or need_right) and len(idx_side) > 0
 
             for dn_type in dn_types:
@@ -423,7 +428,8 @@ class FiringRateVNCBridge:
             if not indices:
                 continue
             eff_rate = rate_hz
-            if group_name in ("turn_left", "turn_right"):
+            if group_name in ("turn_left", "turn_right",
+                              "escape_left", "escape_right"):
                 eff_rate *= _turn_boost
             total_rate = self.dn_baseline_hz + eff_rate
             current = self.cfg.theta * (total_rate / 20.0)
