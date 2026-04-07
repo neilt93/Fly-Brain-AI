@@ -617,6 +617,53 @@ class FiringRateVNCBridge:
 
         return VNCOutput(mn_body_ids=mn_ids.copy(), firing_rates_hz=rates)
 
+    def compute_gait_score(self) -> dict:
+        """Compute tripod gait coordination from recent flex/ext history.
+
+        Tripod gait: group A (LF, RM, RH) alternates with B (RF, LM, LH).
+        Same-group legs should be in-phase (r > 0), cross-group anti-phase (r < 0).
+        Score = (mean_same - mean_cross) / 2, range [-1, +1], 1 = perfect tripod.
+        """
+        LEG = ["LF", "LM", "LH", "RF", "RM", "RH"]
+        A = [0, 4, 5]  # LF, RM, RH
+        B = [3, 1, 2]  # RF, LM, LH
+
+        # Use extensor rate history
+        traces = []
+        for leg_idx in range(6):
+            hist = self._flex_ext_history[leg_idx]["ext"]
+            traces.append(np.array(hist[-200:]) if len(hist) >= 50 else np.zeros(50))
+
+        def _corr(a, b):
+            if a.std() < 0.1 or b.std() < 0.1:
+                return None
+            return float(np.corrcoef(a, b)[0, 1])
+
+        same, cross, pairs = [], [], {}
+        for i in range(6):
+            for j in range(i + 1, 6):
+                r = _corr(traces[i], traces[j])
+                if r is None:
+                    continue
+                key = f"{LEG[i]}-{LEG[j]}"
+                pairs[key] = r
+                if (i in A) == (j in A):
+                    same.append(r)
+                else:
+                    cross.append(r)
+
+        ms = float(np.mean(same)) if same else 0.0
+        mc = float(np.mean(cross)) if cross else 0.0
+        score = (ms - mc) / 2.0
+
+        return {
+            "tripod_score": score,
+            "same_group_mean": ms,
+            "cross_group_mean": mc,
+            "pairs": pairs,
+            "n_active_legs": sum(1 for t in traces if t.std() > 0.1),
+        }
+
     def warmup(self, warmup_ms: float = 200.0):
         """Run VNC warmup with baseline DN stimulation.
 
