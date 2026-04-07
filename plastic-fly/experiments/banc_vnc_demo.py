@@ -106,6 +106,8 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
     positions = []
     joint_log = []
     phase_log = []
+    vnc_activity_log = []
+    leg_rate_log = []
     log_every = max(1, body_steps // 200)  # ~200 frames for Unity
     step_count = 0
     init_pos = obs["fly"][0, :3].copy()
@@ -130,6 +132,24 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
                 positions.append(obs["fly"][0, :3].tolist())
                 joint_log.append(action["joints"].tolist())
                 phase_log.append(phase_name)
+                # Log VNC neural activity (top 50 most active neurons)
+                all_rates = bridge.vnc.get_all_rates()
+                top_idx = np.argsort(all_rates)[-50:]
+                vnc_activity_log.append({
+                    "mn_mean": float(bridge.vnc.get_mn_rates().mean()),
+                    "mn_max": float(bridge.vnc.get_mn_rates().max()),
+                    "dn_mean": float(bridge.vnc.get_dn_rates().mean()),
+                    "network_mean": float(all_rates.mean()),
+                    "n_active": int((all_rates > 1.0).sum()),
+                    "top50_rates": all_rates[top_idx].tolist(),
+                    "top50_indices": top_idx.tolist(),
+                })
+                # Per-leg flex/ext rates
+                leg_rates = {}
+                for li, ln in enumerate(["LF", "LM", "LH", "RF", "RM", "RH"]):
+                    f, e = bridge.vnc.get_flexor_extensor_rates(li)
+                    leg_rates[ln] = {"flex": round(f, 1), "ext": round(e, 1)}
+                leg_rate_log.append(leg_rates)
             step_count += 1
 
         phase_disp = obs["fly"][0, :2] - phase_start_pos
@@ -162,6 +182,16 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
         "joint_angles": joint_log,
         "joint_names": joint_names,
         "phases": phase_log,
+        "vnc_activity": vnc_activity_log,
+        "leg_rates": leg_rate_log,
+        "vnc_info": {
+            "n_neurons": data.n_neurons,
+            "n_dn": data.n_dn,
+            "n_mn": data.n_mn,
+            "n_premotor": data.n_premotor,
+            "n_synapses": data.n_synapses,
+            "source": "BANC (female Drosophila, Harvard Dataverse)",
+        },
     }
     ts_path = output_path / "timeseries_banc_demo.json"
     _write_json_atomic(ts_path, timeseries)
@@ -174,6 +204,11 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
         _write_json_atomic(dst, timeseries)
         print(f"Copied to {dst}")
 
+    # Gait analysis
+    gait = bridge.compute_gait_score()
+    print(f"Tripod gait score: {gait['tripod_score']:.3f} "
+          f"({gait['n_active_legs']}/6 active legs)")
+
     # Save summary
     summary = {
         "body_steps": step_count,
@@ -185,6 +220,8 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
         "model": "BANC firing-rate VNC (Pugliese ODE)",
         "neurons": data.n_neurons,
         "synapses": data.n_synapses,
+        "tripod_score": gait["tripod_score"],
+        "n_active_legs": gait["n_active_legs"],
     }
     _write_json_atomic(output_path / "banc_demo_summary.json", summary)
     print(f"Summary: {output_path / 'banc_demo_summary.json'}")
