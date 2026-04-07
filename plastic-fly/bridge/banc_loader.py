@@ -542,6 +542,9 @@ class BANCVNCData:
     dn_type_to_indices: Dict[str, List[int]] = field(default_factory=dict)
     dn_type_to_body_ids: Dict[str, List[int]] = field(default_factory=dict)
 
+    # DN soma side: model_idx -> "left"/"right" (for turn lateralization)
+    dn_side: Dict[int, str] = field(default_factory=dict)
+
     # MN metadata: list of dicts with keys:
     #   body_id, segment, side, cell_type, leg, leg_idx, direction
     mn_body_ids: np.ndarray = field(default_factory=lambda: np.array([], dtype=np.int64))
@@ -817,9 +820,20 @@ def load_banc_vnc(
     data.dn_type_to_indices = dn_type_to_indices
     data.dn_type_to_body_ids = dn_type_to_body_ids
 
+    # DN soma side for turn lateralization
+    dn_side: Dict[int, str] = {}
+    for _, row in dn_df.iterrows():
+        bid = int(row["body_id"])
+        if bid in bodyid_to_idx:
+            side = str(row.get("side", "")).lower().strip()
+            if side in ("left", "right"):
+                dn_side[bodyid_to_idx[bid]] = side
+    data.dn_side = dn_side
+
     n_types = len(dn_type_to_indices)
     n_dns_mapped = sum(len(v) for v in dn_type_to_indices.values())
-    _print(f"  DN type map: {n_types} types, {n_dns_mapped} neurons")
+    n_sided = sum(1 for s in dn_side.values() if s)
+    _print(f"  DN type map: {n_types} types, {n_dns_mapped} neurons, {n_sided} with side info")
 
     # ---- MN metadata ------------------------------------------------------
 

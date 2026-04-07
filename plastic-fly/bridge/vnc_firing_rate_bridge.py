@@ -333,14 +333,44 @@ class FiringRateVNCBridge:
         return self
 
     def _build_group_dn_mapping(self):
-        """Map decoder groups to firing rate VNC neuron indices."""
+        """Map decoder groups to firing rate VNC neuron indices.
+
+        Turn groups are lateralized by soma side: left-soma DNs map to
+        turn_left, right-soma DNs map to turn_right. This is critical —
+        without lateralization, both turn commands activate the same neurons.
+        """
         dn_type_map = self.vnc._dn_type_to_indices  # type -> [model_idx]
+        dn_type_bids = self.vnc._dn_type_to_body_ids  # type -> [body_id]
+
+        # Build side lookup: model_idx -> "left"/"right"/""
+        idx_side = {}
+        for info in getattr(self.vnc, 'mn_info', []):
+            pass  # MN info, not DN
+        # For DNs, check if the runner has stored side info from BANC
+        if hasattr(self.vnc, '_dn_side'):
+            idx_side = self.vnc._dn_side
+        else:
+            # Infer side from body_id: look up in banc_loader if available
+            # For MANC path, no side info — fall back to non-lateralized
+            idx_side = {}
 
         for group_name, dn_types in _GROUP_DN_TYPES.items():
             indices = []
+            need_left = (group_name == "turn_left")
+            need_right = (group_name == "turn_right")
+            lateralize = (need_left or need_right) and len(idx_side) > 0
+
             for dn_type in dn_types:
                 idxs = dn_type_map.get(dn_type, [])
-                indices.extend(idxs)
+                if lateralize:
+                    for idx in idxs:
+                        side = idx_side.get(idx, "")
+                        if need_left and side == "left":
+                            indices.append(idx)
+                        elif need_right and side == "right":
+                            indices.append(idx)
+                else:
+                    indices.extend(idxs)
             self._group_to_dn_indices[group_name] = sorted(set(indices))
 
         # Report

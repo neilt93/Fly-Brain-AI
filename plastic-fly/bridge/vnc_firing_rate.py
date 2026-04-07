@@ -364,6 +364,9 @@ class FiringRateVNCRunner:
         self._dn_type_to_indices = banc_data.dn_type_to_indices
         self._dn_type_to_body_ids = banc_data.dn_type_to_body_ids
 
+        # --- DN side info (for turn lateralization) ---
+        self._dn_side = getattr(banc_data, 'dn_side', {})
+
         # --- MN metadata ---
         self.mn_body_ids = banc_data.mn_body_ids
         self.mn_info = banc_data.mn_info
