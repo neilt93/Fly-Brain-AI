@@ -101,15 +101,15 @@ def main():
 
     # ── 3. Forward ablation ───────────────────────────────────────────
     print("\n[3/5] Forward ablation test...")
-    import flygym
+    from bridge.flygym_compat import Fly as _Fly, SingleFlySimulation as _Sim
     from bridge.vnc_firing_rate_bridge import FiringRateVNCBridge
 
     def _walk(fwd_rate, steps=5000):
         bridge = FiringRateVNCBridge.from_banc(
             banc_data=data, cfg=cfg, fallback_blend=0.3)
         bridge.warmup(warmup_ms=200.0)
-        fly = flygym.Fly(enable_adhesion=True, draw_adhesion=False)
-        sim = flygym.SingleFlySimulation(fly=fly, timestep=1e-4)
+        fly = _Fly(enable_adhesion=True, draw_adhesion=False)
+        sim = _Sim(fly=fly, timestep=1e-4)
         obs, _ = sim.reset()
         ini = obs["fly"][0, :2].copy()
         gr = {"forward": fwd_rate, "turn_left": 0.0, "turn_right": 0.0,
@@ -158,8 +158,8 @@ def main():
         bridge = FiringRateVNCBridge.from_banc(
             banc_data=data, cfg=cfg_s, fallback_blend=0.3)
         bridge.warmup(warmup_ms=200.0)
-        fly = flygym.Fly(enable_adhesion=True, draw_adhesion=False)
-        sim = flygym.SingleFlySimulation(fly=fly, timestep=1e-4)
+        fly = _Fly(enable_adhesion=True, draw_adhesion=False)
+        sim = _Sim(fly=fly, timestep=1e-4)
         obs, _ = sim.reset()
         ini = obs["fly"][0, :2].copy()
         gr = {"forward": 15.0, "turn_left": 0.0, "turn_right": 0.0,

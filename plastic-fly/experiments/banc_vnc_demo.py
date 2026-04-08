@@ -45,7 +45,7 @@ def _write_json_atomic(path: Path, payload):
 
 
 def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
-    import flygym
+    from bridge.flygym_compat import Fly as _Fly, SingleFlySimulation as _Sim
     from bridge.banc_loader import load_banc_vnc
     from bridge.vnc_firing_rate import FiringRateVNCConfig
     from bridge.vnc_firing_rate_bridge import FiringRateVNCBridge
@@ -77,8 +77,8 @@ def run_demo(body_steps: int = 15000, output_dir: str = "logs/banc_vnc_demo"):
     bridge.warmup(warmup_ms=200.0)
 
     # FlyGym
-    fly = flygym.Fly(enable_adhesion=True, draw_adhesion=False)
-    sim = flygym.SingleFlySimulation(fly=fly, timestep=1e-4)
+    fly = _Fly(enable_adhesion=True, draw_adhesion=False)
+    sim = _Sim(fly=fly, timestep=1e-4)
     obs, _ = sim.reset()
 
     # Phase schedule

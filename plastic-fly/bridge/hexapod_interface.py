@@ -124,12 +124,12 @@ class FlyGymHexapod(HexapodInterface):
         self._last_obs = None
 
     def _create_sim(self):
-        import flygym
-        self.fly = flygym.Fly(
+        from bridge.flygym_compat import Fly, SingleFlySimulation, arena
+        self.fly = Fly(
             enable_adhesion=True, init_pose="stretch", control="position")
-        arena = flygym.arena.FlatTerrain()
-        self.sim = flygym.SingleFlySimulation(
-            fly=self.fly, arena=arena, timestep=self.timestep)
+        flat = arena.FlatTerrain()
+        self.sim = SingleFlySimulation(
+            fly=self.fly, arena=flat, timestep=self.timestep)
 
     def reset(self) -> BodyObservation:
         if self.sim is None:

@@ -162,13 +162,13 @@ class TestPipeline:
         assert bridge.mn_decoder.n_mns == 390
 
     def test_flygym_walking(self, banc_data, banc_config):
-        import flygym
+        from bridge.flygym_compat import Fly as _Fly, SingleFlySimulation as _Sim
         from bridge.vnc_firing_rate_bridge import FiringRateVNCBridge
         bridge = FiringRateVNCBridge.from_banc(banc_data=banc_data, cfg=banc_config,
                                                 fallback_blend=0.3)
         bridge.warmup(warmup_ms=200.0)
-        fly = flygym.Fly(enable_adhesion=True, draw_adhesion=False)
-        sim = flygym.SingleFlySimulation(fly=fly, timestep=1e-4)
+        fly = _Fly(enable_adhesion=True, draw_adhesion=False)
+        sim = _Sim(fly=fly, timestep=1e-4)
         obs, _ = sim.reset()
         ini = obs["fly"][0, :2].copy()
         gr = {"forward": 15.0, "turn_left": 0.0, "turn_right": 0.0,
@@ -185,15 +185,15 @@ class TestPipeline:
 
     def test_forward_ablation(self, banc_data, banc_config):
         """Forward ablation should reduce distance by >50%."""
-        import flygym
+        from bridge.flygym_compat import Fly as _Fly, SingleFlySimulation as _Sim
         from bridge.vnc_firing_rate_bridge import FiringRateVNCBridge
 
         def run_walk(fwd_rate, steps=3000):
             bridge = FiringRateVNCBridge.from_banc(banc_data=banc_data, cfg=banc_config,
                                                     fallback_blend=0.3)
             bridge.warmup(warmup_ms=200.0)
-            fly = flygym.Fly(enable_adhesion=True, draw_adhesion=False)
-            sim = flygym.SingleFlySimulation(fly=fly, timestep=1e-4)
+            fly = _Fly(enable_adhesion=True, draw_adhesion=False)
+            sim = _Sim(fly=fly, timestep=1e-4)
             obs, _ = sim.reset()
             ini = obs["fly"][0, :2].copy()
             gr = {"forward": fwd_rate, "turn_left": 0.0, "turn_right": 0.0,

@@ -157,7 +157,7 @@ def run_closed_loop(
     connectome: str = "flywire",
     vnc_connectome: str | None = None,
 ):
-    import flygym
+    from bridge.flygym_compat import Fly as _Fly, SingleFlySimulation as _Sim, arena as _arena
 
     cfg = BridgeConfig(connectome=connectome)
     output_path = Path(output_dir)
@@ -249,9 +249,9 @@ def run_closed_loop(
 
     # --- Initialize FlyGym ---
     print("Initializing FlyGym...")
-    fly_obj = flygym.Fly(enable_adhesion=True, init_pose="stretch", control="position")
-    arena = flygym.arena.FlatTerrain()
-    sim = flygym.SingleFlySimulation(fly=fly_obj, arena=arena, timestep=1e-4)
+    fly_obj = _Fly(enable_adhesion=True, init_pose="stretch", control="position")
+    _flat = _arena.FlatTerrain()
+    sim = _Sim(fly=fly_obj, arena=_flat, timestep=1e-4)
     obs, info = sim.reset()
 
     # VNC body stepping: step VNC at body frequency for smooth oscillation.
