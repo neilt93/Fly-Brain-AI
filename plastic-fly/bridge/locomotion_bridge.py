@@ -9,9 +9,7 @@ The brain does NOT directly set joint torques. It modulates this layer.
 """
 
 import numpy as np
-from flygym.examples.locomotion import PreprogrammedSteps
-from flygym.examples.locomotion.cpg_controller import CPGNetwork
-from flygym.preprogrammed import get_cpg_biases
+from bridge.vendored_locomotion import PreprogrammedSteps, CPGNetwork, get_cpg_biases
 
 from bridge.interfaces import LocomotionCommand
 

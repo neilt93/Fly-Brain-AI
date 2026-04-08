@@ -14,9 +14,7 @@ import torch
 import torch.nn as nn
 from typing import Optional
 
-from flygym.examples.locomotion import PreprogrammedSteps
-from flygym.examples.locomotion.cpg_controller import CPGNetwork
-from flygym.preprogrammed import get_cpg_biases
+from bridge.vendored_locomotion import PreprogrammedSteps, CPGNetwork, get_cpg_biases
 
 
 LEGS = ["LF", "LM", "LH", "RF", "RM", "RH"]
