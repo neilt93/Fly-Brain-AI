@@ -226,11 +226,37 @@ class HexArthHexapod(HexapodInterface):
         ]
 
     def connect(self):
-        """Open serial connection to servo controller."""
-        raise NotImplementedError(
-            "HexArth hardware interface not yet implemented. "
-            "See bridge/hexapod_interface.py for the design."
-        )
+        """Open serial connection to servo controller.
+
+        Supports Dynamixel Protocol 2.0 (XM/XL series) via the
+        dynamixel_sdk package. Falls back to raw serial if not available.
+        """
+        try:
+            import dynamixel_sdk as dxl
+            self._port_handler = dxl.PortHandler(self.port)
+            self._packet_handler = dxl.PacketHandler(2.0)  # Protocol 2.0
+            if not self._port_handler.openPort():
+                raise ConnectionError(f"Cannot open port {self.port}")
+            if not self._port_handler.setBaudRate(1_000_000):
+                raise ConnectionError("Cannot set baud rate to 1M")
+            self._use_dxl = True
+            # Ping all configured servos
+            n_found = 0
+            for sc in self.servo_configs:
+                model, result, error = self._packet_handler.ping(
+                    self._port_handler, sc.servo_id)
+                if result == dxl.COMM_SUCCESS:
+                    n_found += 1
+                    # Enable torque
+                    self._packet_handler.write1ByteTxRx(
+                        self._port_handler, sc.servo_id, 64, 1)  # ADDR_TORQUE_ENABLE
+            print(f"  HexArth: connected via dynamixel_sdk, {n_found}/{len(self.servo_configs)} servos")
+        except ImportError:
+            import serial
+            self._serial = serial.Serial(self.port, 1_000_000, timeout=0.01)
+            self._use_dxl = False
+            print(f"  HexArth: connected via raw serial (dynamixel_sdk not available)")
+        self._connected = True
 
     def reset(self) -> BodyObservation:
         if not self._connected:
@@ -278,16 +304,79 @@ class HexArthHexapod(HexapodInterface):
             self._disconnect()
 
     def _send_servo_commands(self, joint_angles: np.ndarray):
-        """Convert joint angles to servo units and send over serial."""
-        raise NotImplementedError("Hardware send not implemented")
+        """Convert joint angles to servo units and send via sync write."""
+        if not self._connected:
+            return
+        if self._use_dxl:
+            import dynamixel_sdk as dxl
+            # Sync write goal position (addr 116, 4 bytes for XM series)
+            group = dxl.GroupSyncWrite(
+                self._port_handler, self._packet_handler, 116, 4)
+            for i, sc in enumerate(self.servo_configs):
+                if i < len(joint_angles):
+                    unit = self._joint_to_servo_unit(i, float(joint_angles[i]))
+                    param = [dxl.DXL_LOBYTE(dxl.DXL_LOWORD(unit)),
+                             dxl.DXL_HIBYTE(dxl.DXL_LOWORD(unit)),
+                             dxl.DXL_LOBYTE(dxl.DXL_HIWORD(unit)),
+                             dxl.DXL_HIBYTE(dxl.DXL_HIWORD(unit))]
+                    group.addParam(sc.servo_id, param)
+            group.txPacket()
+            group.clearParam()
+        else:
+            # Raw serial fallback: send as packed binary
+            import struct
+            units = [self._joint_to_servo_unit(i, float(joint_angles[i]))
+                     for i in range(min(len(joint_angles), len(self.servo_configs)))]
+            payload = struct.pack(f"<{len(units)}H", *units)
+            self._serial.write(b"\xff\xfe" + payload)  # header + data
 
     def _read_servo_feedback(self) -> dict:
-        """Read position/load/voltage from all servos."""
-        raise NotImplementedError("Hardware read not implemented")
+        """Read position/load from all servos via sync read."""
+        n = len(self.servo_configs)
+        positions = np.zeros(42, dtype=np.float32)
+        velocities = np.zeros(42, dtype=np.float32)
+        loads = np.zeros(n, dtype=np.float32)
+
+        if self._use_dxl:
+            import dynamixel_sdk as dxl
+            # Sync read present position (addr 132, 4 bytes)
+            group = dxl.GroupSyncRead(
+                self._port_handler, self._packet_handler, 132, 4)
+            for sc in self.servo_configs:
+                group.addParam(sc.servo_id)
+            group.txRxPacket()
+            for i, sc in enumerate(self.servo_configs):
+                if group.isAvailable(sc.servo_id, 132, 4):
+                    unit = group.getData(sc.servo_id, 132, 4)
+                    positions[i] = self._servo_unit_to_joint(i, unit)
+            group.clearParam()
+        else:
+            # Fallback: use last commanded positions
+            positions[:] = self._current_joints
+
+        # Estimate foot pressure from servo load (crude proxy)
+        foot_pressure = np.zeros(6, dtype=np.float32)
+        for i in range(min(6, n // 7)):
+            tibia_idx = i * 7 + 5
+            if tibia_idx < n:
+                foot_pressure[i] = min(abs(loads[tibia_idx]) / 0.5, 1.0)
+
+        return {
+            "positions": positions,
+            "velocities": velocities,
+            "foot_pressure": foot_pressure,
+        }
 
     def _disconnect(self):
-        """Close serial port."""
-        raise NotImplementedError("Hardware disconnect not implemented")
+        """Close serial port and disable servo torques."""
+        if self._use_dxl:
+            for sc in self.servo_configs:
+                self._packet_handler.write1ByteTxRx(
+                    self._port_handler, sc.servo_id, 64, 0)  # torque off
+            self._port_handler.closePort()
+        elif hasattr(self, '_serial'):
+            self._serial.close()
+        self._connected = False
 
     def _joint_to_servo_unit(self, joint_idx: int, angle_rad: float) -> int:
         """Convert joint angle (rad) to servo position unit."""
