@@ -245,6 +245,7 @@ class FiringRateVNCBridge:
 
         # Current group rates cache
         self._cached_group_rates: dict = {}
+        self._proprio_encoder = None  # MANC path has no proprioceptive encoder
 
     @classmethod
     def from_banc(
@@ -336,6 +337,15 @@ class FiringRateVNCBridge:
         self._quality_window = 200
         self._build_mn_rhythm_map()
         self._cached_group_rates: dict = {}
+
+        # Proprioceptive encoder (connectome-routed sensory feedback)
+        try:
+            from bridge.vnc_proprioceptive import ProprioceptiveEncoder
+            self._proprio_encoder = ProprioceptiveEncoder(banc_data, self.vnc)
+            print(f"  Proprioceptive encoder: {self._proprio_encoder.summary()}")
+        except Exception as e:
+            self._proprio_encoder = None
+            print(f"  Proprioceptive encoder: disabled ({e})")
 
         return self
 
@@ -704,6 +714,10 @@ class FiringRateVNCBridge:
 
         # Apply DN stimulation from group rates
         self._apply_dn_stimulation(group_rates)
+
+        # Inject proprioceptive feedback through connectome pathways
+        if self._proprio_encoder is not None and body_obs is not None:
+            self._proprio_encoder.inject(self.vnc, body_obs)
 
         # Periodic perturbation: partially reset VNC rates to prevent
         # fixed-point convergence. The firing-rate ODE converges to a
