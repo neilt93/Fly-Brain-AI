@@ -294,11 +294,7 @@ class ProprioceptiveEncoder:
         # Filter connectivity: sensory -> any VNC model neuron
         # BANC connectivity uses float64 for body IDs (precision loss on 18-digit IDs).
         # Use pd.Series.reindex for exact matching instead of isin().
-        import pandas as pd
         vnc_ids_set = set(self._bodyid_to_idx.keys())
-        # Build exact lookup: map float pre_id back to int via round
-        pre_ids_int = connectivity["pre_id"].values
-        post_ids_int = connectivity["post_id"].values
         # For large IDs, float64 loses ~2 LSBs. Use approximate matching:
         # a float64 pre_id matches a sensory body_id if they round to the same int.
         sensory_id_floats = set(float(x) for x in all_sensory_ids)

@@ -12,7 +12,6 @@ Source: flygym v1.2.1
 License: Apache 2.0 (same as flygym)
 """
 
-import sys
 import pickle
 import numpy as np
 from pathlib import Path
