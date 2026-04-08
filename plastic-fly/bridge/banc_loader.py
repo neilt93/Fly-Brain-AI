@@ -562,6 +562,7 @@ def load_banc_vnc(
     inh_scale: float = 2.0,
     normalize_weights: bool = True,
     target_exc_sum: float = 0.6,
+    include_proprio_relay: int = 0,
     verbose: bool = True,
 ) -> BANCVNCData:
     """Extract VNC premotor subnetwork from BANC for the firing-rate model.
@@ -682,14 +683,36 @@ def load_banc_vnc(
     _print(f"  Populations: {len(dn_ids)} DN, {len(mn_ids)} leg MN, "
            f"{len(premotor_ids)} premotor ({time() - t0:.1f}s)")
 
+    # ---- Proprioceptive relay neurons (optional expansion) ----------------
+    relay_ids: Set[int] = set()
+    if include_proprio_relay > 0:
+        _print(f"  Finding top-{include_proprio_relay} proprioceptive relay INs...")
+        t_relay = time()
+        proprio_mask = neurons["cell_class"].str.lower().str.contains(
+            "chordotonal|campaniform|hair_plate", na=False)
+        proprio_bids = set(neurons[proprio_mask]["body_id"].values)
+        # Targets of proprio neurons that are VNC-intrinsic
+        proprio_post = conn[conn["pre_id"].isin(proprio_bids)]
+        proprio_targets = set(proprio_post["post_id"].values)
+        vnc_intr_mask = neurons["super_class"].str.lower() == "ventral_nerve_cord_intrinsic"
+        vnc_intr_ids = set(neurons[vnc_intr_mask]["body_id"].values)
+        relay_candidates = (proprio_targets & vnc_intr_ids) - mn_ids - premotor_ids
+        # Rank by output weight to premotor circuit
+        base_ids = dn_ids | mn_ids | premotor_ids
+        relay_to_base = conn[
+            conn["pre_id"].isin(relay_candidates) & conn["post_id"].isin(base_ids)]
+        if len(relay_to_base) > 0:
+            ranked = relay_to_base.groupby("pre_id")["weight"].sum().sort_values(ascending=False)
+            relay_ids = set(int(x) for x in ranked.head(include_proprio_relay).index)
+        _print(f"  Proprio relay: {len(relay_ids)} INs added ({time() - t_relay:.1f}s)")
+
     # ---- Combine neuron set -----------------------------------------------
 
     if include_all_dns:
-        all_ids = dn_ids | mn_ids | premotor_ids
+        all_ids = dn_ids | mn_ids | premotor_ids | relay_ids
     else:
-        # Only DNs that project to the subnetwork
         dn_projecting = candidate_premotor & dn_ids
-        all_ids = dn_projecting | mn_ids | premotor_ids
+        all_ids = dn_projecting | mn_ids | premotor_ids | relay_ids
 
     all_ids_sorted = sorted(all_ids)
     bodyid_to_idx = {int(bid): i for i, bid in enumerate(all_ids_sorted)}
