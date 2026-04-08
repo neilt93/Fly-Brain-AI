@@ -135,7 +135,7 @@ class ProprioceptiveParams:
     # Current injection scaling: sensory rate (Hz) -> I_stim units
     # For firing-rate model: I = rate * current_scale * synapse_weight
     # For Brian2 model: injected via sensory_rates dict (Hz directly)
-    current_scale: float = 0.01     # Converts Hz to activation units
+    current_scale: float = 0.0001   # Converts Hz to activation units (gentle: 146K syn weight)
 
     # Weight normalization: divide total current per target by fan-in count
     # to prevent high-fan-in neurons from saturating
@@ -292,10 +292,20 @@ class ProprioceptiveEncoder:
             all_sensory_ids.update(pop.body_ids)
 
         # Filter connectivity: sensory -> any VNC model neuron
+        # BANC connectivity uses float64 for body IDs (precision loss on 18-digit IDs).
+        # Use pd.Series.reindex for exact matching instead of isin().
+        import pandas as pd
         vnc_ids_set = set(self._bodyid_to_idx.keys())
+        # Build exact lookup: map float pre_id back to int via round
+        pre_ids_int = connectivity["pre_id"].values
+        post_ids_int = connectivity["post_id"].values
+        # For large IDs, float64 loses ~2 LSBs. Use approximate matching:
+        # a float64 pre_id matches a sensory body_id if they round to the same int.
+        sensory_id_floats = set(float(x) for x in all_sensory_ids)
+        vnc_id_floats = set(float(x) for x in vnc_ids_set)
         sensory_edges = connectivity[
-            connectivity["pre_id"].isin(all_sensory_ids)
-            & connectivity["post_id"].isin(vnc_ids_set)
+            connectivity["pre_id"].isin(sensory_id_floats)
+            & connectivity["post_id"].isin(vnc_id_floats)
         ]
 
         self._log(f"Sensory->VNC edges: {len(sensory_edges):,} "
@@ -308,10 +318,19 @@ class ProprioceptiveEncoder:
             for bid in pop.body_ids:
                 bid_to_pops.setdefault(bid, []).append(pi)
 
+        # Build float->int reverse maps for exact body_id recovery
+        _sensory_float_to_int = {float(x): x for x in all_sensory_ids}
+        _vnc_float_to_int = {float(x): x for x in vnc_ids_set}
+
         for _, edge in sensory_edges.iterrows():
-            pre_id = int(edge["pre_id"])
-            post_id = int(edge["post_id"])
+            pre_float = edge["pre_id"]
+            post_float = edge["post_id"]
             weight = int(edge.get("weight", 1))
+
+            pre_id = _sensory_float_to_int.get(pre_float)
+            post_id = _vnc_float_to_int.get(post_float)
+            if pre_id is None or post_id is None:
+                continue
 
             post_idx = self._bodyid_to_idx.get(post_id)
             if post_idx is None:
